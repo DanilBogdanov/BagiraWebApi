@@ -32,12 +32,13 @@ namespace BagiraWebApi.Services.Exchanges
             _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
         }
 
-        public async Task<IEnumerable<GoodStorage1C>> GetGoodStorages()
+        public async Task<IEnumerable<GoodStorage>> GetGoodStorages()
         {
             string requestBody = "<bag:GetStorages/>";
             string line = await GetSoapResponse(requestBody);
-            var storages = JsonConvert.DeserializeObject<IEnumerable<GoodStorage1C>>(line)
+            var storages1C = JsonConvert.DeserializeObject<IEnumerable<GoodStorage1C>>(line)
                 ?? throw new Exception("Error of get 'storages' from 1c!");
+            var storages = storages1C.Select(storage1C => new GoodStorage { Id = storage1C.Id, Name = storage1C.Name });
             return storages;
         }
 

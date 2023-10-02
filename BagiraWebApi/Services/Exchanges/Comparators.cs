@@ -32,5 +32,31 @@ namespace BagiraWebApi.Services.Exchanges
                 return HashCode.Combine(obj.Id, obj.DataVersion);
             }
         }
+
+        public class GoodStorageIdComparator : IEqualityComparer<GoodStorage>
+        {
+            public bool Equals(GoodStorage? x, GoodStorage? y)
+            {
+                return x?.Id == y?.Id;
+            }
+
+            public int GetHashCode([DisallowNull] GoodStorage obj)
+            {
+                return HashCode.Combine(obj.Id);
+            }
+        }
+
+        public class GoodStorageNameComparator : IEqualityComparer<GoodStorage>
+        {
+            public bool Equals(GoodStorage? x, GoodStorage? y)
+            {
+                return x?.Id == y?.Id && x?.Name == y?.Name;
+            }
+
+            public int GetHashCode([DisallowNull] GoodStorage obj)
+            {
+                return HashCode.Combine(obj.Id, obj.Name);
+            }
+        }
     }
 }

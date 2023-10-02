@@ -29,6 +29,7 @@ namespace BagiraWebApi.Services.Exchanges
             Console.WriteLine("Start update");
 
             await UpdateGoods();
+            await UpdateStorages();
 
         }
 
@@ -50,7 +51,10 @@ namespace BagiraWebApi.Services.Exchanges
 
             await AddGoods(idsToAdd);
             await UpdateGoods(idsToUpdate);
-            await DeleteGoods(idsToDel);
+            if (idsToDel.Count > 0)
+            {
+                await DeleteGoods(idsToDel);
+            }
 
             if (idsToAdd.Count + idsToUpdate.Count > 0)
             {
@@ -81,6 +85,7 @@ namespace BagiraWebApi.Services.Exchanges
             {
                 var idsToLoad = ids.Skip(i).Take(STEP_LOAD_GOODS);
                 var goods = await _soap1C.GetGoods(idsToLoad);
+                goods.ForEach(good => Console.WriteLine(">>>>" + good.Name));
                 _context.Goods.UpdateRange(goods);
                 _logger.LogInformation($"Updated {i + goods.Count} goods of {ids.Count}");
             }
@@ -100,6 +105,24 @@ namespace BagiraWebApi.Services.Exchanges
             {
                 await UpdatePath(item.Id, $"{parentPath}{item.Id}/", groups);
             }
+        }
+
+        private async Task UpdateStorages()
+        {
+            var loadedStorages = await _soap1C.GetGoodStorages();
+            var dbStorages = _context.GoodStorages.AsNoTracking().ToList();
+
+            var toAdd = loadedStorages.Except(dbStorages, new GoodStorageIdComparator());
+            await _context.GoodStorages.AddRangeAsync(toAdd);
+
+            var toDel = dbStorages.Except(loadedStorages, new GoodStorageIdComparator());
+            _context.GoodStorages.RemoveRange(toDel);
+
+            var toUpdate = loadedStorages.Intersect(dbStorages, new GoodStorageIdComparator())
+                .Except(dbStorages, new GoodStorageNameComparator());
+            _context.GoodStorages.UpdateRange(toUpdate);
+
+            await _context.SaveChangesAsync();
         }
     }
 }

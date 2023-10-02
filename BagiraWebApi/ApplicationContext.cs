@@ -6,6 +6,7 @@ namespace BagiraWebApi
     public class ApplicationContext : DbContext
     {
         public DbSet<Good> Goods { get; set; } = null!;
+        public DbSet<GoodStorage> GoodStorages { get; set; } = null!;
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
@@ -15,6 +16,7 @@ namespace BagiraWebApi
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Good>().Property(g => g.Id).ValueGeneratedNever();
+            modelBuilder.Entity<GoodStorage>().Property(g => g.Id).ValueGeneratedNever();
         }
     }
 }
