@@ -1,8 +1,10 @@
 ﻿using BagiraWebApi.Models.Bagira;
 using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
 using Microsoft.VisualBasic;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using static BagiraWebApi.Services.Exchanges.Comparators;
 
 namespace BagiraWebApi.Services.Exchanges
@@ -50,8 +52,14 @@ namespace BagiraWebApi.Services.Exchanges
             await UpdateGoods(idsToUpdate);
             await DeleteGoods(idsToDel);
 
+            if (idsToAdd.Count + idsToUpdate.Count > 0)
+            {
+                var groups = _context.Goods.Where(good => good.IsGroup).AsNoTracking().ToList();
+                await UpdatePath(parent: null, parentPath: "/", groups);
+            }
+
             await _context.SaveChangesAsync();
-            
+
             stopwatch.Stop();
             Console.WriteLine($"Stop update: {stopwatch.Elapsed.TotalSeconds}sec");
         }
@@ -77,10 +85,21 @@ namespace BagiraWebApi.Services.Exchanges
                 _logger.LogInformation($"Updated {i + goods.Count} goods of {ids.Count}");
             }
         }
-        
+
         private async Task DeleteGoods(List<int> ids)
         {
             await _context.Goods.Where(good => ids.Contains(good.Id)).ExecuteDeleteAsync();
+        }
+
+        private async Task UpdatePath(int? parent, string parentPath, List<Good> groups)
+        {
+            await _context.Goods.Where(good => good.ParentId == parent)
+                .ExecuteUpdateAsync(good => good.SetProperty(g => g.Path, parentPath));
+
+            foreach (var item in groups.Where(group => group.ParentId == parent))
+            {
+                await UpdatePath(item.Id, $"{parentPath}{item.Id}/", groups);
+            }
         }
     }
 }
