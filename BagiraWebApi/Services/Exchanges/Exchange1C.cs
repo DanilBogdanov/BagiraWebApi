@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
 using Microsoft.VisualBasic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
 using static BagiraWebApi.Services.Exchanges.Comparators;
 
@@ -30,7 +31,7 @@ namespace BagiraWebApi.Services.Exchanges
 
             await UpdateGoods();
             await UpdateStorages();
-
+            await UpdatePriceTypes();
         }
 
         private async Task UpdateGoods()
@@ -121,6 +122,24 @@ namespace BagiraWebApi.Services.Exchanges
             var toUpdate = loadedStorages.Intersect(dbStorages, new GoodStorageIdComparator())
                 .Except(dbStorages, new GoodStorageNameComparator());
             _context.GoodStorages.UpdateRange(toUpdate);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task UpdatePriceTypes()
+        {
+            var loadedPriceTypes = await _soap1C.GetPriceTypes();
+            var dbPriceTypes = _context.GoodPriceTypes.AsNoTracking().ToList();
+
+            var toAdd = loadedPriceTypes.Except(dbPriceTypes, new GoodPriceTypeIdComparator());
+            await _context.GoodPriceTypes.AddRangeAsync(toAdd);
+
+            var toDel = dbPriceTypes.Except(loadedPriceTypes, new GoodPriceTypeIdComparator());
+            _context.GoodPriceTypes.RemoveRange(toDel);
+
+            var toUpdate = loadedPriceTypes.Intersect(dbPriceTypes, new GoodPriceTypeIdComparator())
+                .Except(dbPriceTypes, new GoodPriceTypeNameComparator());
+            _context.GoodPriceTypes.UpdateRange(toUpdate);
 
             await _context.SaveChangesAsync();
         }

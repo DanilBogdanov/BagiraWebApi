@@ -34,7 +34,7 @@ app.MapControllers();
 
 app.MapGet("/", (ApplicationContext db) =>
 {
-    return db.GoodStorages.ToList();
+    return db.GoodPriceTypes.ToList();
 });
 
 app.Run();

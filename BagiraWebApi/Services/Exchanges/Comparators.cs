@@ -58,5 +58,31 @@ namespace BagiraWebApi.Services.Exchanges
                 return HashCode.Combine(obj.Id, obj.Name);
             }
         }
+
+        public class GoodPriceTypeIdComparator : IEqualityComparer<GoodPriceType>
+        {
+            public bool Equals(GoodPriceType? x, GoodPriceType? y)
+            {
+                return x?.Id == y?.Id;
+            }
+
+            public int GetHashCode([DisallowNull] GoodPriceType obj)
+            {
+                return HashCode.Combine(obj.Id);
+            }
+        }
+
+        public class GoodPriceTypeNameComparator : IEqualityComparer<GoodPriceType>
+        {
+            public bool Equals(GoodPriceType? x, GoodPriceType? y)
+            {
+                return x?.Id == y?.Id && x?.Name == y?.Name;
+            }
+
+            public int GetHashCode([DisallowNull] GoodPriceType obj)
+            {
+                return HashCode.Combine(obj.Id, obj.Name);
+            }
+        }
     }
 }

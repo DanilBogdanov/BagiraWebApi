@@ -85,12 +85,13 @@ namespace BagiraWebApi.Services.Exchanges
             return goodRests;
         }
 
-        public async Task<IEnumerable<GoodPriceType1C>> GetPriceTypes()
+        public async Task<IEnumerable<GoodPriceType>> GetPriceTypes()
         {
             string requestBody = "<bag:GetPriceTypes/>";
             string line = await GetSoapResponse(requestBody);
-            var goodPriceTypes = JsonConvert.DeserializeObject<IEnumerable<GoodPriceType1C>>(line)
+            var goodPriceTypes1C = JsonConvert.DeserializeObject<IEnumerable<GoodPriceType1C>>(line)
                 ?? throw new Exception("Error of get 'goodPriceTypes' from 1c!");
+            var goodPriceTypes = goodPriceTypes1C.Select(gpt => new GoodPriceType { Id = gpt.Id, Name = gpt.Name });
             return goodPriceTypes;
         }
 

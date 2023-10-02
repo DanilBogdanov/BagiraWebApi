@@ -7,6 +7,7 @@ namespace BagiraWebApi
     {
         public DbSet<Good> Goods { get; set; } = null!;
         public DbSet<GoodStorage> GoodStorages { get; set; } = null!;
+        public DbSet<GoodPriceType> GoodPriceTypes { get; set; } = null!;
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
@@ -17,6 +18,7 @@ namespace BagiraWebApi
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Good>().Property(g => g.Id).ValueGeneratedNever();
             modelBuilder.Entity<GoodStorage>().Property(g => g.Id).ValueGeneratedNever();
+            modelBuilder.Entity<GoodPriceType>().Property(g => g.Id).ValueGeneratedNever();
         }
     }
 }
