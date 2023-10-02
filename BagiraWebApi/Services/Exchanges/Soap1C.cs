@@ -1,8 +1,11 @@
-﻿using BagiraWebApi.Services.Exchange1C.DataModels;
+﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Services.Exchanges.DataModels;
+using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using Newtonsoft.Json;
+using System.Linq;
 using System.Net;
 
-namespace BagiraWebApi.Services.Exchange1C
+namespace BagiraWebApi.Services.Exchanges
 {
     /// <summary>
     /// Url of Bagira service should be like this: http://{host}/WebServices/ws/bagira_app.1cws
@@ -38,16 +41,18 @@ namespace BagiraWebApi.Services.Exchange1C
             return storages;
         }
 
-        public async Task<IEnumerable<GoodDataVersion1C>> GetGoodsDataVersions()
+        public async Task<IEnumerable<GoodDataVersionDTO>> GetGoodsDataVersions()
         {
             string requestBody = "<bag:GetGoodsDataVersions/>";
             string line = await GetSoapResponse(requestBody);
-            var goodsDataVersions = JsonConvert.DeserializeObject<IEnumerable<GoodDataVersion1C>>(line)
+            var goodsDataVersions1C = JsonConvert.DeserializeObject<IEnumerable<GoodDataVersion1C>>(line)
                 ?? throw new Exception("Error of get 'goodDataVersion' from 1c!");
+            var goodsDataVersions = goodsDataVersions1C.Select(gdv => new GoodDataVersionDTO
+            { Id = gdv.Id, DataVersion = gdv.DataVersion });
             return goodsDataVersions;
         }
 
-        public async Task<IEnumerable<Good1C>> GetGoods(IEnumerable<int> goodIds)
+        public async Task<List<Good>> GetGoods(IEnumerable<int> goodIds)
         {
             string ids = String.Join(',', goodIds);
             string requestBody = "<bag:GetGoods>"
@@ -55,8 +60,18 @@ namespace BagiraWebApi.Services.Exchange1C
                 + "</bag:GetGoods>";
 
             string line = await GetSoapResponse(requestBody);
-            var goods = JsonConvert.DeserializeObject<IEnumerable<Good1C>>(line)
+            var loadedGoods = JsonConvert.DeserializeObject<IEnumerable<Good1C>>(line)
                 ?? throw new Exception("Error of get 'goods' from 1c!");
+            var goods = loadedGoods.Select(lg => new Good
+            {
+                Id = lg.Id,
+                DataVersion = lg.DataVersion,
+                ParentId = lg.ParentId,
+                IsGroup = lg.IsGroup,
+                Name = lg.Name,
+                FullName = lg.FullName,
+                Description = lg.Description
+            }).ToList();
             return goods;
         }
 

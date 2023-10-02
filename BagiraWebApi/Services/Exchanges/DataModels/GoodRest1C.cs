@@ -1,4 +1,4 @@
-﻿namespace BagiraWebApi.Services.Exchange1C.DataModels
+﻿namespace BagiraWebApi.Services.Exchanges.DataModels
 {
     public class GoodRest1C
     {
