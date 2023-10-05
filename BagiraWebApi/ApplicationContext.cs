@@ -9,6 +9,8 @@ namespace BagiraWebApi
         public DbSet<GoodStorage> GoodStorages { get; set; } = null!;
         public DbSet<GoodPriceType> GoodPriceTypes { get; set; } = null!;
 
+        public DbSet<GoodPrice> GoodPrices { get; set; } = null!;
+
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
         }
@@ -19,6 +21,8 @@ namespace BagiraWebApi
             modelBuilder.Entity<Good>().Property(g => g.Id).ValueGeneratedNever();
             modelBuilder.Entity<GoodStorage>().Property(g => g.Id).ValueGeneratedNever();
             modelBuilder.Entity<GoodPriceType>().Property(g => g.Id).ValueGeneratedNever();
+            modelBuilder.Entity<GoodPrice>().HasKey(p => new { p.GoodId, p.PriceTypeId });
+            modelBuilder.Entity<GoodPrice>().Property(p => p.Price).HasColumnType("decimal(18,2)");
         }
     }
 }

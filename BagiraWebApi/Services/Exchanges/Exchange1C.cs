@@ -34,7 +34,8 @@ namespace BagiraWebApi.Services.Exchanges
             Console.WriteLine("Start update");
             await UpdateGoods();
             await UpdateStorages();
-            await UpdatePriceTypes();            
+            await UpdatePriceTypes();
+            await UpdatePrices();
         }
 
         private async Task UpdateGoods()
@@ -231,6 +232,36 @@ namespace BagiraWebApi.Services.Exchanges
             _context.GoodPriceTypes.UpdateRange(toUpdate);
 
             await _context.SaveChangesAsync();
+        }
+
+        private async Task UpdatePrices()
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var loadedGoodPrices = await _soap1C.GetPrices();
+            var dbGoodPrices = _context.GoodPrices.AsNoTracking().ToList();
+            var idComparator = new GoodPriceIdComparator();
+
+            //Add
+            var itemsToAdd = loadedGoodPrices.Except(dbGoodPrices, idComparator).ToList();
+            await _context.AddRangeAsync(itemsToAdd);
+            
+            //Delete
+            var itemsToDel = dbGoodPrices.Except(loadedGoodPrices, idComparator).ToList();
+            _context.RemoveRange(itemsToDel);
+            
+
+            //Update
+            var loadedToUpdate = loadedGoodPrices.Intersect(dbGoodPrices, idComparator).ToList();
+            var dbToUpdate = dbGoodPrices.Intersect(loadedGoodPrices, idComparator).ToList();
+            var itemsToUpdate = loadedToUpdate.Except(dbToUpdate, new GoodPriceFullComparator()).ToList();
+            _context.UpdateRange(itemsToUpdate);
+            
+            _context.SaveChanges();
+            stopwatch.Stop();
+
+            _logger.LogInformation($"\nUpdated Prices in {stopwatch.Elapsed.TotalSeconds} sec");
         }
     }
 }

@@ -2,8 +2,10 @@
 using BagiraWebApi.Services.Exchanges.DataModels;
 using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using Newtonsoft.Json;
+using System.IO;
 using System.Linq;
 using System.Net;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BagiraWebApi.Services.Exchanges
 {
@@ -95,12 +97,20 @@ namespace BagiraWebApi.Services.Exchanges
             return goodPriceTypes;
         }
 
-        public async Task<IEnumerable<GoodPrice1C>> GetPrices()
+        public async Task<IEnumerable<GoodPrice>> GetPrices()
         {
             string requestBody = "<bag:GetPrices/>";
             string line = await GetSoapResponse(requestBody);
-            var goodPrices = JsonConvert.DeserializeObject<IEnumerable<GoodPrice1C>>(line)
+            var goodPrices1C = JsonConvert.DeserializeObject<IEnumerable<GoodPrice1C>>(line)
                 ?? throw new Exception("Error of get 'goodPrices' from 1c!");
+
+            using (StreamWriter writer = new StreamWriter("d:/prices.txt", false))
+            {
+                await writer.WriteLineAsync(line);
+            }
+
+            var goodPrices = goodPrices1C
+                .Select(gp => new GoodPrice { GoodId = gp.GoodId, PriceTypeId = gp.TypeId, Price = gp.Price });
             return goodPrices;
         }
 
