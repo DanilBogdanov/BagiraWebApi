@@ -19,7 +19,7 @@ namespace BagiraWebApi.Services.Exchanges
 
         public Soap1C(IConfiguration configuration)
         {
-            string host = configuration["1c:host"];
+            string host = configuration["1c:devHost"];
             string login = configuration["1c:login"];
             string password = configuration["1c:password"];
             _soapServiceUrl = $"http://{host}/{SERVICES_FOLDER}/ws/{SERVICES_NAME}.1cws";
@@ -29,7 +29,7 @@ namespace BagiraWebApi.Services.Exchanges
                 Credentials = new NetworkCredential(login, password)
             };
             _httpClient = new HttpClient(httpHandler);
-            _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            //_httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
         }
 
         public async Task<IEnumerable<GoodStorage>> GetGoodStorages()
@@ -42,15 +42,13 @@ namespace BagiraWebApi.Services.Exchanges
             return storages;
         }
 
-        public async Task<IEnumerable<GoodDataVersionDTO>> GetGoodsDataVersions()
+        public async Task<IEnumerable<GoodDataVersion1C>> GetGoodsDataVersions()
         {
             string requestBody = "<bag:GetGoodsDataVersions/>";
             string line = await GetSoapResponse(requestBody);
             var goodsDataVersions1C = JsonConvert.DeserializeObject<IEnumerable<GoodDataVersion1C>>(line)
                 ?? throw new Exception("Error of get 'goodDataVersion' from 1c!");
-            var goodsDataVersions = goodsDataVersions1C.Select(gdv => new GoodDataVersionDTO
-            { Id = gdv.Id, DataVersion = gdv.DataVersion });
-            return goodsDataVersions;
+            return goodsDataVersions1C;
         }
 
         public async Task<List<Good>> GetGoods(IEnumerable<int> goodIds)
@@ -61,17 +59,19 @@ namespace BagiraWebApi.Services.Exchanges
                 + "</bag:GetGoods>";
 
             string line = await GetSoapResponse(requestBody);
-            var loadedGoods = JsonConvert.DeserializeObject<IEnumerable<Good1C>>(line)
+            var loadedGoods = JsonConvert.DeserializeObject<List<Good1C>>(line)
                 ?? throw new Exception("Error of get 'goods' from 1c!");
-            var goods = loadedGoods.Select(lg => new Good
+            var goods = loadedGoods.Select(good => new Good
             {
-                Id = lg.Id,
-                DataVersion = lg.DataVersion,
-                ParentId = lg.ParentId,
-                IsGroup = lg.IsGroup,
-                Name = lg.Name,
-                FullName = lg.FullName,
-                Description = lg.Description
+                Id = good.Id,
+                DataVersion = good.DataVersion,
+                ParentId = good.ParentId,
+                IsGroup = good.IsGroup,
+                Name = good.Name,
+                FullName = good.FullName,
+                Description = good.Description,
+                ImgDataVersion = good.ImgDataVersion,
+                ImgExt = good.ImgExt
             }).ToList();
             return goods;
         }
@@ -104,7 +104,7 @@ namespace BagiraWebApi.Services.Exchanges
             return goodPrices;
         }
 
-        public async Task<string> GetImage(string goodId)
+        public async Task<string> GetImage(int goodId)
         {
             string data = "<bag:GetImage>"
                 + $"<bag:id>{goodId}</bag:id>"
@@ -121,12 +121,9 @@ namespace BagiraWebApi.Services.Exchanges
                 + requestBody
                 + "</soapenv:Body>"
                 + "</soapenv:Envelope>";
-
             StringContent content = new(requestData);
-
             HttpResponseMessage response = await _httpClient.PostAsync(_soapServiceUrl, content);
             var responseString = response.Content.ReadAsStringAsync().Result;
-
             int startIndex = responseString.IndexOf("<m:return");
             startIndex = responseString.IndexOf(">", startIndex) + 1;
             int endIndex = responseString.LastIndexOf("</m:return>");

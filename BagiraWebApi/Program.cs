@@ -28,13 +28,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.MapGet("/", (ApplicationContext db) =>
 {
-    return db.GoodPriceTypes.ToList();
+    return db.Goods.ToList();
 });
 
 app.Run();

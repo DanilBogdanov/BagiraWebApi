@@ -1,9 +1,12 @@
 ﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Services.Exchanges.DataModels;
 using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
 using Microsoft.VisualBasic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using static BagiraWebApi.Services.Exchanges.Comparators;
@@ -12,7 +15,8 @@ namespace BagiraWebApi.Services.Exchanges
 {
     public class Exchange1C
     {
-        const int STEP_LOAD_GOODS = 500;
+        const int STEP_LOAD_GOODS = 100;
+        const string IMG_FOLDER = "bagira/img";
         private readonly ILogger<Exchange1C> _logger;
         private readonly Soap1C _soap1C;
         private readonly ApplicationContext _context;
@@ -28,10 +32,9 @@ namespace BagiraWebApi.Services.Exchanges
         {
 
             Console.WriteLine("Start update");
-
             await UpdateGoods();
             await UpdateStorages();
-            await UpdatePriceTypes();
+            await UpdatePriceTypes();            
         }
 
         private async Task UpdateGoods()
@@ -41,7 +44,8 @@ namespace BagiraWebApi.Services.Exchanges
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var loadedGoodDataVersions = await _soap1C.GetGoodsDataVersions();
+            var loadedGoodDataVersions = (await _soap1C.GetGoodsDataVersions())
+                .Select(gdv => new GoodDataVersionDTO { Id = gdv.Id, DataVersion = gdv.DataVersion });
             var dbGoodDataVersions = _context.Goods.Select(good => new GoodDataVersionDTO
             { Id = good.Id, DataVersion = good.DataVersion }).AsNoTracking().ToList();
 
@@ -51,13 +55,13 @@ namespace BagiraWebApi.Services.Exchanges
             var idsToDel = dbGoodDataVersions.Except(loadedGoodDataVersions, new GoodIdComparator()).Select(dto => dto.Id).ToList();
 
             await AddGoods(idsToAdd);
-            await UpdateGoods(idsToUpdate);
+            var exchangeResult = await UpdateGoods(idsToUpdate);
             if (idsToDel.Count > 0)
             {
                 await DeleteGoods(idsToDel);
             }
 
-            if (idsToAdd.Count + idsToUpdate.Count > 0)
+            if (idsToAdd.Count > 0 || exchangeResult.HasChangedParent)
             {
                 var groups = _context.Goods.Where(good => good.IsGroup).AsNoTracking().ToList();
                 await UpdatePath(parent: null, parentPath: "/", groups);
@@ -75,26 +79,111 @@ namespace BagiraWebApi.Services.Exchanges
             {
                 var idsToLoad = ids.Skip(i).Take(STEP_LOAD_GOODS);
                 var goods = await _soap1C.GetGoods(idsToLoad);
+
+                foreach (var good in goods)
+                {
+                    if (good.ImgDataVersion != null && good.ImgExt != null)
+                    {
+                        good.ImgUrl = await UpdateImg(good.Id, good.ImgExt);
+                    }
+                }
                 await _context.Goods.AddRangeAsync(goods);
+                await _context.SaveChangesAsync();
                 _logger.LogInformation($"Add {i + goods.Count} new goods of {ids.Count}");
             }
         }
 
-        private async Task UpdateGoods(List<int> ids)
+        private async Task<ExchangeResult> UpdateGoods(List<int> ids)
         {
+            bool hasChangedParent = false;
+
             for (int i = 0; i < ids.Count; i += STEP_LOAD_GOODS)
             {
                 var idsToLoad = ids.Skip(i).Take(STEP_LOAD_GOODS);
-                var goods = await _soap1C.GetGoods(idsToLoad);
-                goods.ForEach(good => Console.WriteLine(">>>>" + good.Name));
-                _context.Goods.UpdateRange(goods);
-                _logger.LogInformation($"Updated {i + goods.Count} goods of {ids.Count}");
+                var loadedGoods = await _soap1C.GetGoods(idsToLoad);
+                var dbGoods = _context.Goods.Where(good => idsToLoad.Contains(good.Id));
+                foreach (var good in dbGoods)
+                {
+                    var loadedGood = loadedGoods.Find(g => g.Id == good.Id);
+                    if (loadedGood != null)
+                    {
+                        Console.WriteLine(good.Name);
+                        good.DataVersion = loadedGood.DataVersion;
+                        if (good.ParentId != loadedGood.ParentId)
+                        {
+                            good.ParentId = loadedGood.ParentId;
+                            hasChangedParent = true;
+                        }
+                        good.IsGroup = loadedGood.IsGroup;
+                        good.Name = loadedGood.Name;
+                        good.FullName = loadedGood.FullName;
+                        good.Description = loadedGood.Description;
+                        if (loadedGood.ImgDataVersion != good.ImgDataVersion)
+                        {
+                            if (loadedGood.ImgDataVersion != null && loadedGood.ImgExt != null)
+                            {
+                                var imgUrl = await UpdateImg(loadedGood.Id, loadedGood.ImgExt);
+                                if (good.ImgUrl != imgUrl)
+                                {
+                                    DeleteImg(good.ImgUrl);
+                                    good.ImgUrl = imgUrl;
+                                }
+                            }
+                            else
+                            {
+                                DeleteImg(good.ImgUrl);
+                                good.ImgUrl = null;
+                            }
+                            good.ImgDataVersion = loadedGood.ImgDataVersion;
+                            good.ImgExt = loadedGood.ImgExt;
+                        }
+                    }
+                }
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Updated {i + loadedGoods.Count} goods of {ids.Count}");
             }
+
+            return new ExchangeResult
+            {
+                HasChangedParent = hasChangedParent,
+            };
         }
 
         private async Task DeleteGoods(List<int> ids)
         {
+            var imgUrls = _context.Goods.Where(g =>  ids.Contains(g.Id) && g.ImgUrl != null).Select(g => g.ImgUrl);
+            foreach(var imgUrl in imgUrls)
+            {
+                DeleteImg(imgUrl);
+            }
             await _context.Goods.Where(good => ids.Contains(good.Id)).ExecuteDeleteAsync();
+        }
+
+        private async Task<string?> UpdateImg(int id, string imgExt)
+        {
+            var imgBinary = await _soap1C.GetImage(id);
+            if (imgBinary != "")
+            {
+                if (imgExt == "")
+                {
+                    imgExt = ".jpg";
+                }
+                string filePath = $"{IMG_FOLDER}/{id}{imgExt}";
+                using (BinaryWriter writer = new BinaryWriter(File.Open($"wwwroot/{filePath}", FileMode.Create)))
+                {
+                    writer.Write(Convert.FromBase64String(imgBinary));
+                }
+                return filePath;
+            }
+            return null;
+        }
+
+        private void DeleteImg(string? filePath)
+        {
+            if (filePath != null)
+            {
+                File.Delete($"wwwroot/{filePath}");
+            }
         }
 
         private async Task UpdatePath(int? parent, string parentPath, List<Good> groups)
