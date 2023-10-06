@@ -1,6 +1,6 @@
-﻿namespace BagiraWebApi.Services.Exchanges.DataModels
+﻿namespace BagiraWebApi.Models.Bagira
 {
-    public class GoodRest1C
+    public class GoodRest
     {
         public int GoodId { get; set; }
         public int StorageId { get; set; }

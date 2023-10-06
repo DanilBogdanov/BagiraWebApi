@@ -30,18 +30,27 @@ namespace BagiraWebApi.Services.Exchanges
 
         public async Task Update()
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            _logger.LogInformation(">>>>>>>>>>>>>> Exchange 1c: Start");
+            var updateGoodsResult = await UpdateGoods();
+            var updateStoragesResult = await UpdateStorages();
+            var updateRestsResult = await UpdateRests();
+            var updatePriceTypesResult = await UpdatePriceTypes();
+            var updatePricesResult = await UpdatePrices();
+            stopwatch.Stop();
 
-            Console.WriteLine("Start update");
-            await UpdateGoods();
-            await UpdateStorages();
-            await UpdatePriceTypes();
-            await UpdatePrices();
+            _logger.LogInformation($">>>>>>>>>>>>>> Exchange 1c: Done in {stopwatch.Elapsed.Seconds}sec"
+                + $"\nGoods:      {updateGoodsResult}"
+                + $"\nStorages:   {updateStoragesResult}"
+                + $"\nRests:      {updateRestsResult}"
+                + $"\nPriceTypes: {updatePriceTypesResult}"
+                + $"\nPrices:     {updatePricesResult}"
+                );
         }
 
-        private async Task UpdateGoods()
+        private async Task<ExchangeResult> UpdateGoods()
         {
-            _logger.LogInformation($"Start Load DataVersion");
-
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
@@ -71,7 +80,13 @@ namespace BagiraWebApi.Services.Exchanges
             await _context.SaveChangesAsync();
 
             stopwatch.Stop();
-            Console.WriteLine($"Stop update: {stopwatch.Elapsed.TotalSeconds}sec");
+            return new ExchangeResult
+            {
+                ElapsedSec = stopwatch.Elapsed.TotalSeconds,
+                CreatedCount = idsToAdd.Count,
+                UpdatedCount = idsToUpdate.Count,
+                DeletedCount = idsToDel.Count
+            };
         }
 
         private async Task AddGoods(List<int> ids)
@@ -198,43 +213,66 @@ namespace BagiraWebApi.Services.Exchanges
             }
         }
 
-        private async Task UpdateStorages()
+        private async Task<ExchangeResult> UpdateStorages()
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var loadedStorages = await _soap1C.GetGoodStorages();
             var dbStorages = _context.GoodStorages.AsNoTracking().ToList();
 
-            var toAdd = loadedStorages.Except(dbStorages, new GoodStorageIdComparator());
+            var toAdd = loadedStorages.Except(dbStorages, new GoodStorageIdComparator()).ToList();
             await _context.GoodStorages.AddRangeAsync(toAdd);
 
-            var toDel = dbStorages.Except(loadedStorages, new GoodStorageIdComparator());
+            var toDel = dbStorages.Except(loadedStorages, new GoodStorageIdComparator()).ToList();
             _context.GoodStorages.RemoveRange(toDel);
 
             var toUpdate = loadedStorages.Intersect(dbStorages, new GoodStorageIdComparator())
-                .Except(dbStorages, new GoodStorageNameComparator());
+                .Except(dbStorages, new GoodStorageNameComparator()).ToList();
             _context.GoodStorages.UpdateRange(toUpdate);
 
             await _context.SaveChangesAsync();
+            stopwatch.Stop();
+
+            return new ExchangeResult
+            {
+                ElapsedSec = stopwatch.Elapsed.TotalSeconds,
+                CreatedCount = toAdd.Count,
+                UpdatedCount = toUpdate.Count,
+                DeletedCount = toDel.Count
+            };
         }
 
-        private async Task UpdatePriceTypes()
+        private async Task<ExchangeResult> UpdatePriceTypes()
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             var loadedPriceTypes = await _soap1C.GetPriceTypes();
             var dbPriceTypes = _context.GoodPriceTypes.AsNoTracking().ToList();
 
-            var toAdd = loadedPriceTypes.Except(dbPriceTypes, new GoodPriceTypeIdComparator());
+            var toAdd = loadedPriceTypes.Except(dbPriceTypes, new GoodPriceTypeIdComparator()).ToList();
             await _context.GoodPriceTypes.AddRangeAsync(toAdd);
 
-            var toDel = dbPriceTypes.Except(loadedPriceTypes, new GoodPriceTypeIdComparator());
+            var toDel = dbPriceTypes.Except(loadedPriceTypes, new GoodPriceTypeIdComparator()).ToList();
             _context.GoodPriceTypes.RemoveRange(toDel);
 
             var toUpdate = loadedPriceTypes.Intersect(dbPriceTypes, new GoodPriceTypeIdComparator())
-                .Except(dbPriceTypes, new GoodPriceTypeNameComparator());
+                .Except(dbPriceTypes, new GoodPriceTypeNameComparator()).ToList();
             _context.GoodPriceTypes.UpdateRange(toUpdate);
 
             await _context.SaveChangesAsync();
+            stopwatch.Stop();
+
+            return new ExchangeResult
+            {
+                ElapsedSec = stopwatch.Elapsed.TotalSeconds,
+                CreatedCount = toAdd.Count,
+                UpdatedCount = toUpdate.Count,
+                DeletedCount = toDel.Count
+            };
         }
 
-        private async Task UpdatePrices()
+        private async Task<ExchangeResult> UpdatePrices()
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -258,10 +296,49 @@ namespace BagiraWebApi.Services.Exchanges
             var itemsToUpdate = loadedToUpdate.Except(dbToUpdate, new GoodPriceFullComparator()).ToList();
             _context.UpdateRange(itemsToUpdate);
             
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             stopwatch.Stop();
 
-            _logger.LogInformation($"\nUpdated Prices in {stopwatch.Elapsed.TotalSeconds} sec");
+            return new ExchangeResult {
+                ElapsedSec = stopwatch.Elapsed.TotalSeconds,
+                CreatedCount = itemsToAdd.Count,
+                UpdatedCount = itemsToUpdate.Count,
+                DeletedCount = itemsToDel.Count
+            };
+        }
+
+        private async Task<ExchangeResult> UpdateRests()
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var loadedGoodRests = await _soap1C.GetRestOfGoods();
+            var dbGoodRests = _context.GoodRests.AsNoTracking().ToList();
+            
+            //Add
+            var itemsToAdd = loadedGoodRests.Except(dbGoodRests, new GoodRestIdComparator()).ToList();
+            _context.AddRange(itemsToAdd);
+
+            //Delete
+            var itemsToDel = dbGoodRests.Except(loadedGoodRests, new GoodRestIdComparator()).ToList();
+            _context.RemoveRange(itemsToDel);
+
+            //Update
+            var loadedToUpdate = loadedGoodRests.Intersect(dbGoodRests, new GoodRestIdComparator()).ToList();
+            var dbToUpdate = dbGoodRests.Intersect(loadedToUpdate, new GoodRestIdComparator()).ToList();
+            var itemsToUpdate = loadedToUpdate.Except(dbToUpdate, new GoodRestFullComparator()).ToList();
+            _context.UpdateRange(itemsToUpdate);
+
+            await _context.SaveChangesAsync();
+            stopwatch.Stop();
+
+            return new ExchangeResult
+            {
+                ElapsedSec = stopwatch.Elapsed.TotalSeconds,
+                CreatedCount = itemsToAdd.Count,
+                UpdatedCount = itemsToUpdate.Count,
+                DeletedCount = itemsToDel.Count
+            };
         }
     }
 }

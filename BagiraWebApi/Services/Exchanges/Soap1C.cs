@@ -78,12 +78,14 @@ namespace BagiraWebApi.Services.Exchanges
             return goods;
         }
 
-        public async Task<IEnumerable<GoodRest1C>> GetRestOfGoods()
+        public async Task<IEnumerable<GoodRest>> GetRestOfGoods()
         {
             string requestBody = "<bag:GetRestOfGoods/>";
             string line = await GetSoapResponse(requestBody);
-            var goodRests = JsonConvert.DeserializeObject<IEnumerable<GoodRest1C>>(line)
+            var goodRests1С = JsonConvert.DeserializeObject<IEnumerable<GoodRest1C>>(line)
                 ?? throw new Exception("Error of get 'restOfGoods' from 1c!");
+            var goodRests = goodRests1С
+                .Select(gr => new GoodRest { GoodId = gr.GoodId, StorageId = gr.StorageId, Rest = gr.Rest });
             return goodRests;
         }
 
