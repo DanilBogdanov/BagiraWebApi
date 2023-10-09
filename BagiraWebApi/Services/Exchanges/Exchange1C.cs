@@ -38,6 +38,7 @@ namespace BagiraWebApi.Services.Exchanges
             var updateRestsResult = await UpdateRests();
             var updatePriceTypesResult = await UpdatePriceTypes();
             var updatePricesResult = await UpdatePrices();
+            var updatePropertyValuesResult = await UpdatePropertyValues();
             stopwatch.Stop();
 
             _logger.LogInformation($">>>>>>>>>>>>>> Exchange 1c: Done in {stopwatch.Elapsed.Seconds}sec"
@@ -46,6 +47,7 @@ namespace BagiraWebApi.Services.Exchanges
                 + $"\nRests:      {updateRestsResult}"
                 + $"\nPriceTypes: {updatePriceTypesResult}"
                 + $"\nPrices:     {updatePricesResult}"
+                + $"\nProperty:   {updatePropertyValuesResult}"
                 );
         }
 
@@ -327,6 +329,40 @@ namespace BagiraWebApi.Services.Exchanges
             var loadedToUpdate = loadedGoodRests.Intersect(dbGoodRests, new GoodRestIdComparator()).ToList();
             var dbToUpdate = dbGoodRests.Intersect(loadedToUpdate, new GoodRestIdComparator()).ToList();
             var itemsToUpdate = loadedToUpdate.Except(dbToUpdate, new GoodRestFullComparator()).ToList();
+            _context.UpdateRange(itemsToUpdate);
+
+            await _context.SaveChangesAsync();
+            stopwatch.Stop();
+
+            return new ExchangeResult
+            {
+                ElapsedSec = stopwatch.Elapsed.TotalSeconds,
+                CreatedCount = itemsToAdd.Count,
+                UpdatedCount = itemsToUpdate.Count,
+                DeletedCount = itemsToDel.Count
+            };
+        }
+
+        private async Task<ExchangeResult> UpdatePropertyValues()
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var loadedPropertyValues = await _soap1C.GetPropertyValues();
+            var dbPropertyValues = _context.GoodPropertyValues.AsNoTracking().ToList();
+
+            //Add
+            var itemsToAdd = loadedPropertyValues.Except(dbPropertyValues, new GoodPropertyValueIdComparator()).ToList();
+            _context.AddRange(itemsToAdd);
+
+            //Delete
+            var itemsToDel = dbPropertyValues.Except(loadedPropertyValues, new GoodPropertyValueIdComparator()).ToList();
+            _context.RemoveRange(itemsToDel);
+
+            //Update
+            var loadedToUpdate = loadedPropertyValues.Intersect(dbPropertyValues, new GoodPropertyValueIdComparator()).ToList();
+            var dbToUpdate = dbPropertyValues.Intersect(loadedToUpdate, new GoodPropertyValueIdComparator()).ToList();
+            var itemsToUpdate = loadedToUpdate.Except(dbToUpdate, new GoodPropertyValueFullComparator()).ToList();
             _context.UpdateRange(itemsToUpdate);
 
             await _context.SaveChangesAsync();

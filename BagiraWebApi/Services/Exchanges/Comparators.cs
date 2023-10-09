@@ -140,5 +140,34 @@ namespace BagiraWebApi.Services.Exchanges
                 return HashCode.Combine(obj.GoodId, obj.PriceTypeId, obj.Price);
             }
         }
+        
+        public class GoodPropertyValueIdComparator : IEqualityComparer<GoodPropertyValue>
+        {
+            public bool Equals(GoodPropertyValue? x, GoodPropertyValue? y)
+            {
+                return x?.GoodId == y?.GoodId && x?.PropertyId == y?.PropertyId;
+            }
+
+            public int GetHashCode([DisallowNull] GoodPropertyValue obj)
+            {
+                return HashCode.Combine(obj.GoodId, obj.PropertyId);
+            }
+        }
+
+        public class GoodPropertyValueFullComparator : IEqualityComparer<GoodPropertyValue>
+        {
+            public bool Equals(GoodPropertyValue? x, GoodPropertyValue? y)
+            {
+                return x?.GoodId == y?.GoodId
+                    && x?.PropertyId == y?.PropertyId
+                    && x?.ValueId == y?.ValueId
+                    && x?.Value == y?.Value;
+            }
+
+            public int GetHashCode([DisallowNull] GoodPropertyValue obj)
+            {
+                return HashCode.Combine(obj.GoodId, obj.PropertyId, obj.ValueId, obj.Value);
+            }
+        }
     }
 }

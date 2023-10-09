@@ -105,12 +105,6 @@ namespace BagiraWebApi.Services.Exchanges
             string line = await GetSoapResponse(requestBody);
             var goodPrices1C = JsonConvert.DeserializeObject<IEnumerable<GoodPrice1C>>(line)
                 ?? throw new Exception("Error of get 'goodPrices' from 1c!");
-
-            using (StreamWriter writer = new StreamWriter("d:/prices.txt", false))
-            {
-                await writer.WriteLineAsync(line);
-            }
-
             var goodPrices = goodPrices1C
                 .Select(gp => new GoodPrice { GoodId = gp.GoodId, PriceTypeId = gp.TypeId, Price = gp.Price });
             return goodPrices;
@@ -121,8 +115,18 @@ namespace BagiraWebApi.Services.Exchanges
             string data = "<bag:GetImage>"
                 + $"<bag:id>{goodId}</bag:id>"
                 + "</bag:GetImage>";
-
             return await GetSoapResponse(data);
+        }
+
+        public async Task<IEnumerable<GoodPropertyValue>> GetPropertyValues()
+        {
+            string data = "<bag:GetPropertyValues/>";
+            var line = await GetSoapResponse(data);
+            var goodPropertyValues1C = JsonConvert.DeserializeObject<IEnumerable<GoodPropertyValue1C>>(line)
+                ?? throw new Exception("Error of get 'goodPropertyValues' from 1c!");
+            var goodPropertyValues = goodPropertyValues1C
+                .Select(gp => new GoodPropertyValue { GoodId = gp.GoodId, PropertyId = gp.PropertyId, ValueId = gp.ValueId, Value = gp.Value });
+            return goodPropertyValues;
         }
 
         private async Task<string> GetSoapResponse(string requestBody)
