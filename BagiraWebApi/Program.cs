@@ -1,5 +1,6 @@
 using BagiraWebApi;
 using BagiraWebApi.Services;
+using BagiraWebApi.Services.Bagira;
 using BagiraWebApi.Services.Exchanges;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,7 @@ builder.Services.AddSwaggerGen();
 var connectionString = builder.Configuration.GetConnectionString("DebugConnection");
 builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<Exchange1C>();
+builder.Services.AddScoped<BagiraService>();
 builder.Services.AddHostedService<Worker>();
 
 var app = builder.Build();

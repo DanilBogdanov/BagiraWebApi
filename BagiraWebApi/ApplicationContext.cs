@@ -20,6 +20,7 @@ namespace BagiraWebApi
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Good>().Property(g => g.Id).ValueGeneratedNever();
+            modelBuilder.Entity<Good>().HasIndex(g => g.Path);
             modelBuilder.Entity<GoodStorage>().Property(g => g.Id).ValueGeneratedNever();
             modelBuilder.Entity<GoodRest>().HasKey(gr => new { gr.GoodId, gr.StorageId });
             modelBuilder.Entity<GoodPriceType>().Property(g => g.Id).ValueGeneratedNever();

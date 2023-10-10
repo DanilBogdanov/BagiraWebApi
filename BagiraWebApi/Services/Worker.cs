@@ -19,7 +19,7 @@ namespace BagiraWebApi.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
-                await exchange1C.Update();
+                //await exchange1C.Update();
             }
             await Task.Delay(5000, stoppingToken);
         }

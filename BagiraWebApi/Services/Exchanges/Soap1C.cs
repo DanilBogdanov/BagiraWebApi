@@ -21,9 +21,9 @@ namespace BagiraWebApi.Services.Exchanges
 
         public Soap1C(IConfiguration configuration)
         {
-            string host = configuration["1c:devHost"];
-            string login = configuration["1c:login"];
-            string password = configuration["1c:password"];
+            string host = configuration["1c:Connection:DevHost"];
+            string login = configuration["1c:Connection:Login"];
+            string password = configuration["1c:Connection:Password"];
             _soapServiceUrl = $"http://{host}/{SERVICES_FOLDER}/ws/{SERVICES_NAME}.1cws";
 
             HttpClientHandler httpHandler = new()
