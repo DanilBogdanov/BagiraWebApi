@@ -5,8 +5,8 @@ namespace BagiraWebApi.Services.Bagira
 {
     public class MenuService
     {
-        ApplicationContext _context;
-        IConfiguration _configuration;
+        private readonly ApplicationContext _context;
+        private readonly IConfiguration _configuration;
 
         public MenuService(ApplicationContext context, IConfiguration configuration)
         {
@@ -16,51 +16,47 @@ namespace BagiraWebApi.Services.Bagira
 
         public List<MenuDTO> GetCatMenu()
         {
-            var catValueId = _configuration["1c:Properties:ValueIds:Cat"];
-            var catAndDogValueId = _configuration["1c:Properties:ValueIds:Cat&Dog"];
-            var groups = GetGroups(new List<string> { catValueId, catAndDogValueId });
-            var menu = GetMenu(groups, null);
+            var configPath = "1c:Properties:ValueIds:ForCats";
+            var configValue = _configuration[configPath]
+                ?? throw new Exception($"Not found configuration: {configPath}");
+            var catValueIds = configValue.Split(",");
+            var menu = GetMenu(catValueIds);
 
             return menu;
         }
 
         public List<MenuDTO> GetDogMenu()
         {
-            var dogValueId = _configuration["1c:Properties:ValueIds:Dog"];
-            var catAndDogValueId = _configuration["1c:Properties:ValueIds:Cat&Dog"];
-            var groups = GetGroups(new List<string> { dogValueId, catAndDogValueId });
-            var menu = GetMenu(groups, null);
+            var configPath = "1c:Properties:ValueIds:ForDogs";
+            var configValue = _configuration[configPath]
+                ?? throw new Exception($"Not found configuration: {configPath}");
+            var dogValueIds = configValue.Split(",");
+            var menu = GetMenu(dogValueIds);
 
             return menu;
         }
 
         public List<MenuDTO> GetOtherMenu()
         {
-            var rodentValueId = _configuration["1c:Properties:ValueIds:Rodent"];
-            var horseValueId = _configuration["1c:Properties:ValueIds:Horse"];
-            var birdValueId = _configuration["1c:Properties:ValueIds:Bird"];
-            var birdAndRodentValueId = _configuration["1c:Properties:ValueIds:BirdAndRodent"];
-            var reptileValueId = _configuration["1c:Properties:ValueIds:Reptile"];
-            var fishValueId = _configuration["1c:Properties:ValueIds:Fish"];
-            var otherValueId = _configuration["1c:Properties:ValueIds:Other"];
-            var groups = GetGroups(new List<string> {
-                rodentValueId,
-                horseValueId,
-                birdValueId,
-                birdAndRodentValueId,
-                reptileValueId,
-                fishValueId,
-                otherValueId
-            });
-            var menu = GetMenu(groups, null);
+            var configPath = "1c:Properties:ValueIds:ForOthers";
+            var configValue = _configuration[configPath]
+                ?? throw new Exception($"Not found configuration: {configPath}");
+            var othersValueIds = configValue.Split(",");
+            var menu = GetMenu(othersValueIds);
 
             return menu;
         }
 
-        private List<Good> GetGroups(List<string> valueIds)
+        private List<MenuDTO> GetMenu(string[] valueIds)
         {
-            var storageId = int.Parse(_configuration["1c:DefaultStorage"]);
-            var animalPropertyId = _configuration["1c:Properties:Ids:Animal"];
+            var storageConfigPath = "1c:DefaultStorage";
+            var storageConfigValue = _configuration[storageConfigPath]
+                ?? throw new Exception($"Not found configuration: {storageConfigPath}");
+            var storageId = int.Parse(storageConfigValue);
+
+            var animalConfigPath = "1c:Properties:Ids:Animal";
+            var animalPropertyId = _configuration[animalConfigPath]
+                ?? throw new Exception($"Not found configuration: {animalConfigPath}");
             var groups = _context.Goods
                 .Where(
                     g => g.IsGroup
@@ -76,11 +72,12 @@ namespace BagiraWebApi.Services.Bagira
                         )
                     )
                 .ToList();
+            var menu = MakeMenu(groups, null);
 
-            return groups;
+            return menu;
         }
 
-        private List<MenuDTO> GetMenu(List<Good> groups, int? parentId)
+        private static List<MenuDTO> MakeMenu(List<Good> groups, int? parentId)
         {
             var menu = groups.Where(gr => gr.ParentId == parentId)
                 .Select(group => new MenuDTO { Id = group.Id, Name = group.Name, Path = group.Path }).ToList();
@@ -89,7 +86,7 @@ namespace BagiraWebApi.Services.Bagira
             {
                 if (groups.Any(gr => gr.ParentId == item.Id))
                 {
-                    item.Children = GetMenu(groups, item.Id);
+                    item.Children = MakeMenu(groups, item.Id);
                 }
             }
 
