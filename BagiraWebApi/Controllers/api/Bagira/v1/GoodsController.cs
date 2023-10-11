@@ -24,5 +24,29 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
             }
             return Ok(goodDto);
         }
+
+        [HttpGet("cats/groups/{groupId}")]
+        public async Task<IActionResult> GetCatGoodsOfGroupAsync(int groupId)
+        {
+            var catGoodsDto = await _bagiraService.Goods.GetCatGoodsByGroupAsync(groupId);
+            
+            return Ok(catGoodsDto);
+        }
+
+        [HttpGet("dogs/groups/{groupId}")]
+        public async Task<IActionResult> GetDogGoodsOfGroupAsync(int groupId)
+        {
+            var catGoodsDto = await _bagiraService.Goods.GetDogGoodsByGroupAsync(groupId);
+            
+            return Ok(catGoodsDto);
+        }
+
+        [HttpGet("others/groups/{groupId}")]
+        public async Task<IActionResult> GetOtherGoodsOfGroupAsync(int groupId)
+        {
+            var catGoodsDto = await _bagiraService.Goods.GetOtherGoodsByGroupAsync(groupId);
+            
+            return Ok(catGoodsDto);
+        }
     }
 }
