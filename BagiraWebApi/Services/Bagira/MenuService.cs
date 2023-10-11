@@ -1,5 +1,6 @@
 ﻿using BagiraWebApi.Models.Bagira.DTO;
 using BagiraWebApi.Models.Bagira;
+using Microsoft.EntityFrameworkCore;
 
 namespace BagiraWebApi.Services.Bagira
 {
@@ -14,40 +15,40 @@ namespace BagiraWebApi.Services.Bagira
             _configuration = configuration;
         }
 
-        public List<MenuDTO> GetCatMenu()
+        public async Task<List<MenuDTO>> GetCatMenuAsync()
         {
             var configPath = "1c:Properties:ValueIds:ForCats";
             var configValue = _configuration[configPath]
                 ?? throw new Exception($"Not found configuration: {configPath}");
             var catValueIds = configValue.Split(",");
-            var menu = GetMenu(catValueIds);
+            var menu = await GetMenuAsync(catValueIds);
 
             return menu;
         }
 
-        public List<MenuDTO> GetDogMenu()
+        public async Task<List<MenuDTO>> GetDogMenuAsync()
         {
             var configPath = "1c:Properties:ValueIds:ForDogs";
             var configValue = _configuration[configPath]
                 ?? throw new Exception($"Not found configuration: {configPath}");
             var dogValueIds = configValue.Split(",");
-            var menu = GetMenu(dogValueIds);
+            var menu = await GetMenuAsync(dogValueIds);
 
             return menu;
         }
 
-        public List<MenuDTO> GetOtherMenu()
+        public async Task<List<MenuDTO>> GetOtherMenuAsync()
         {
             var configPath = "1c:Properties:ValueIds:ForOthers";
             var configValue = _configuration[configPath]
                 ?? throw new Exception($"Not found configuration: {configPath}");
             var othersValueIds = configValue.Split(",");
-            var menu = GetMenu(othersValueIds);
+            var menu = await GetMenuAsync(othersValueIds);
 
             return menu;
         }
 
-        private List<MenuDTO> GetMenu(string[] valueIds)
+        private async Task<List<MenuDTO>> GetMenuAsync(string[] valueIds)
         {
             var storageConfigPath = "1c:DefaultStorage";
             var storageConfigValue = _configuration[storageConfigPath]
@@ -57,7 +58,7 @@ namespace BagiraWebApi.Services.Bagira
             var animalConfigPath = "1c:Properties:Ids:Animal";
             var animalPropertyId = _configuration[animalConfigPath]
                 ?? throw new Exception($"Not found configuration: {animalConfigPath}");
-            var groups = _context.Goods
+            var groups = await _context.Goods
                 .Where(
                     g => g.IsGroup
                     && _context.Goods.Any(
@@ -71,7 +72,7 @@ namespace BagiraWebApi.Services.Bagira
                         && _context.GoodRests.Any(goodRest => goodRest.GoodId == good.Id && goodRest.StorageId == storageId)
                         )
                     )
-                .ToList();
+                .ToListAsync();
             var menu = MakeMenu(groups, null);
 
             return menu;

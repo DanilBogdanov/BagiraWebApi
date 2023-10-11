@@ -16,21 +16,21 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
         }
 
         [HttpGet("cat")]
-        public IActionResult GetCatMenu()
+        public async Task<IActionResult> GetCatMenuAsync()
         {
-            return Ok(_bagiraService.Menu.GetCatMenu());
+            return Ok(await _bagiraService.Menu.GetCatMenuAsync());
         }
         
         [HttpGet("dog")]
-        public IActionResult GetDogMenu()
+        public async Task<IActionResult> GetDogMenuAsync()
         {
-            return Ok(_bagiraService.Menu.GetDogMenu());
+            return Ok(await _bagiraService.Menu.GetDogMenuAsync());
         }
 
         [HttpGet("other")]
-        public IActionResult GetOtherMenu()
+        public async Task<IActionResult> GetOtherMenuAsync()
         {
-            return Ok(_bagiraService.Menu.GetOtherMenu());
+            return Ok(await _bagiraService.Menu.GetOtherMenuAsync());
         }
     }
 }
