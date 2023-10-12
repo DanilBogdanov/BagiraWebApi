@@ -8,9 +8,9 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
     [ApiController]
     public class MenuController : ControllerBase
     {
-        private BagiraService _bagiraService;
+        private MenuService _bagiraService;
 
-        public MenuController(BagiraService bagiraService)
+        public MenuController(MenuService bagiraService)
         {
             _bagiraService = bagiraService;
         }
@@ -18,19 +18,19 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
         [HttpGet("cat")]
         public async Task<IActionResult> GetCatMenuAsync()
         {
-            return Ok(await _bagiraService.Menu.GetCatMenuAsync());
+            return Ok(await _bagiraService.GetCatMenuAsync());
         }
         
         [HttpGet("dog")]
         public async Task<IActionResult> GetDogMenuAsync()
         {
-            return Ok(await _bagiraService.Menu.GetDogMenuAsync());
+            return Ok(await _bagiraService.GetDogMenuAsync());
         }
 
         [HttpGet("other")]
         public async Task<IActionResult> GetOtherMenuAsync()
         {
-            return Ok(await _bagiraService.Menu.GetOtherMenuAsync());
+            return Ok(await _bagiraService.GetOtherMenuAsync());
         }
     }
 }

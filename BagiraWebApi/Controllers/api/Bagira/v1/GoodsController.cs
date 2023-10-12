@@ -1,4 +1,5 @@
 ﻿using BagiraWebApi.Services.Bagira;
+using BagiraWebApi.Services.Bagira.DataModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BagiraWebApi.Controllers.api.Bagira.v1
@@ -7,17 +8,17 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
     [ApiController]
     public class GoodsController : Controller
     {
-        private readonly BagiraService _bagiraService;
+        private readonly GoodService _goodService;
 
-        public GoodsController(BagiraService bagiraService)
+        public GoodsController(GoodService bagiraService)
         {
-            _bagiraService = bagiraService;
+            _goodService = bagiraService;
         }
 
         [HttpGet("{goodId}")]
         public async Task<IActionResult> GetGoodAsync(int goodId)
         {
-            var goodDto = await _bagiraService.Goods.GetGoodAsync(goodId);
+            var goodDto = await _goodService.GetGoodAsync(goodId);
             if (goodDto == null)
             {
                 return NotFound();
@@ -25,28 +26,56 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
             return Ok(goodDto);
         }
 
-        [HttpGet("cats/groups/{groupId}")]
-        public async Task<IActionResult> GetCatGoodsOfGroupAsync(int groupId)
+        [HttpGet("cats")]
+        public async Task<IActionResult> GetCatGoodsAsync(
+            int? groupId,
+            int? take,
+            int? skip)
         {
-            var catGoodsDto = await _bagiraService.Goods.GetCatGoodsByGroupAsync(groupId);
-            
+            var queryProps = new BagiraQueryProps
+            {
+                GroupId = groupId,
+                Take = take,
+                Skip = skip
+            };
+
+            var catGoodsDto = await _goodService.GetCatGoodsAsync(queryProps);
+
             return Ok(catGoodsDto);
         }
 
-        [HttpGet("dogs/groups/{groupId}")]
-        public async Task<IActionResult> GetDogGoodsOfGroupAsync(int groupId)
+        [HttpGet("dogs")]
+        public async Task<IActionResult> GetDogGoodsOfGroupAsync(
+            int? groupId,
+            int? take,
+            int? skip)
         {
-            var catGoodsDto = await _bagiraService.Goods.GetDogGoodsByGroupAsync(groupId);
-            
-            return Ok(catGoodsDto);
+            var queryProps = new BagiraQueryProps
+            {
+                GroupId = groupId,
+                Take = take,
+                Skip = skip
+            };
+            var dogGoodsDto = await _goodService.GetDogGoodsAsync(queryProps);
+
+            return Ok(dogGoodsDto);
         }
 
-        [HttpGet("others/groups/{groupId}")]
-        public async Task<IActionResult> GetOtherGoodsOfGroupAsync(int groupId)
+        [HttpGet("others")]
+        public async Task<IActionResult> GetOtherGoodsOfGroupAsync(
+            int? groupId,
+            int? take,
+            int? skip)
         {
-            var catGoodsDto = await _bagiraService.Goods.GetOtherGoodsByGroupAsync(groupId);
-            
-            return Ok(catGoodsDto);
+            var queryProps = new BagiraQueryProps
+            {
+                GroupId = groupId,
+                Take = take,
+                Skip = skip
+            };
+            var otherGoodsDto = await _goodService.GetOtherGoodsAsync(queryProps);
+
+            return Ok(otherGoodsDto);
         }
     }
 }

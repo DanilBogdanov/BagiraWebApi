@@ -16,7 +16,8 @@ builder.Services.AddSwaggerGen();
 var connectionString = builder.Configuration.GetConnectionString("DebugConnection");
 builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<Exchange1C>();
-builder.Services.AddScoped<BagiraService>();
+builder.Services.AddScoped<GoodService>();
+builder.Services.AddScoped<MenuService>();
 builder.Services.AddHostedService<Worker>();
 
 var app = builder.Build();
