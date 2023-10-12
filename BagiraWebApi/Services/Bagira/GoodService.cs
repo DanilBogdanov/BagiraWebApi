@@ -81,20 +81,20 @@ namespace BagiraWebApi.Services.Bagira
                 ?? throw new Exception($"Not found configuration: {priceTypeConfigPath}");
             var priceTypeId = int.Parse(priceTypeConfigValue);
 
-            var goodsQuery = _context.Goods.AsNoTracking()
+            var goodsQuery = _context.Goods
                 .Where(good =>
                     (queryProps.GroupId == null || good.Path.Contains($"/{queryProps.GroupId}/"))
                     && !good.IsGroup
                     && good.ImgUrl != null
                     && _context.GoodRests
                         .Any(goodRest => goodRest.GoodId == good.Id && goodRest.StorageId == storageId)
-                    && (queryProps.PropertyValuesIds == null || _context.GoodPropertyValues.AsNoTracking()
+                    && (queryProps.PropertyValuesIds == null || _context.GoodPropertyValues
                         .Any(
                             gpv => gpv.GoodId == good.Id
                             && queryProps!.PropertyValuesIds.Contains(gpv.ValueId)
                             ))
                     )
-                .Join(_context.GoodPrices.AsNoTracking().Where(gp => gp.PriceTypeId == priceTypeId),
+                .Join(_context.GoodPrices.Where(gp => gp.PriceTypeId == priceTypeId),
                     good => good.Id,
                     gp => gp.GoodId,
                     (good, goodPrice) => new GoodDTO
