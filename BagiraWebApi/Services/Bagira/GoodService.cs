@@ -33,7 +33,7 @@ namespace BagiraWebApi.Services.Bagira
             };
         }
 
-        public async Task<BagiraGoodsResponse> GetCatGoodsAsync(BagiraQueryProps queryProps)
+        public async Task<GoodsDTO> GetCatGoodsAsync(BagiraQueryProps queryProps)
         {
             var configPath = "1c:Properties:ValueIds:ForCats";
             var configValue = _configuration[configPath]
@@ -44,7 +44,7 @@ namespace BagiraWebApi.Services.Bagira
             return goods;
         }
 
-        public async Task<BagiraGoodsResponse> GetDogGoodsAsync(BagiraQueryProps queryProps)
+        public async Task<GoodsDTO> GetDogGoodsAsync(BagiraQueryProps queryProps)
         {
             var configPath = "1c:Properties:ValueIds:ForDogs";
             var configValue = _configuration[configPath]
@@ -55,7 +55,7 @@ namespace BagiraWebApi.Services.Bagira
             return goods;
         }
 
-        public async Task<BagiraGoodsResponse> GetOtherGoodsAsync(BagiraQueryProps queryProps)
+        public async Task<GoodsDTO> GetOtherGoodsAsync(BagiraQueryProps queryProps)
         {
             var configPath = "1c:Properties:ValueIds:ForOthers";
             var configValue = _configuration[configPath]
@@ -66,7 +66,7 @@ namespace BagiraWebApi.Services.Bagira
             return goods;
         }
 
-        public async Task<BagiraGoodsResponse> GetGoods(BagiraQueryProps queryProps)
+        public async Task<GoodsDTO> GetGoods(BagiraQueryProps queryProps)
         {
             var take = queryProps.Take ?? 20;
             var skip = queryProps.Skip ?? 0;
@@ -106,11 +106,12 @@ namespace BagiraWebApi.Services.Bagira
                     });
             var goodsCount = await goodsQuery.CountAsync();
             var goods = await goodsQuery
-                .Take(take)
+                .OrderBy(g => g.Id)
                 .Skip(skip)
+                .Take(take)
                 .ToListAsync();
             
-            return new BagiraGoodsResponse 
+            return new GoodsDTO 
             { 
                 Take = take, 
                 Skip = skip,

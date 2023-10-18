@@ -1,33 +1,37 @@
 ﻿using BagiraWebApi.Services.Bagira;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace BagiraWebApi.Controllers.api.Bagira.v1
 {
     [Route("api/bagira/v1/[controller]")]
-    [ApiController]
+    [ApiController]    
     public class MenuController : ControllerBase
     {
         private MenuService _bagiraService;
 
         public MenuController(MenuService bagiraService)
         {
-            _bagiraService = bagiraService;
+            _bagiraService = bagiraService;       
         }
 
-        [HttpGet("cat")]
+        [OutputCache(PolicyName = "GoodsMenuTag")]
+        [HttpGet("cats")]
         public async Task<IActionResult> GetCatMenuAsync()
         {
             return Ok(await _bagiraService.GetCatMenuAsync());
         }
-        
-        [HttpGet("dog")]
+
+        [OutputCache(PolicyName = "GoodsMenuTag")]
+        [HttpGet("dogs")]
         public async Task<IActionResult> GetDogMenuAsync()
         {
             return Ok(await _bagiraService.GetDogMenuAsync());
         }
 
-        [HttpGet("other")]
+        [OutputCache(PolicyName = "GoodsMenuTag")]
+        [HttpGet("others")]
         public async Task<IActionResult> GetOtherMenuAsync()
         {
             return Ok(await _bagiraService.GetOtherMenuAsync());

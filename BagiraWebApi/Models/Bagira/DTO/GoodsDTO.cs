@@ -1,8 +1,6 @@
-﻿using BagiraWebApi.Models.Bagira.DTO;
-
-namespace BagiraWebApi.Services.Bagira.DataModels
+﻿namespace BagiraWebApi.Models.Bagira.DTO
 {
-    public class BagiraGoodsResponse
+    public class GoodsDTO
     {
         public int Take { get; set; }
         public int Skip { get; set; }

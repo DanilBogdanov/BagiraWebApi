@@ -81,7 +81,7 @@ namespace BagiraWebApi.Services.Bagira
         private static List<MenuDTO> MakeMenu(List<Good> groups, int? parentId)
         {
             var menu = groups.Where(gr => gr.ParentId == parentId)
-                .Select(group => new MenuDTO { Id = group.Id, Name = group.Name, Path = group.Path }).ToList();
+                .Select(group => new MenuDTO { Id = group.Id, Name = group.Name }).ToList();
 
             foreach (var item in menu)
             {

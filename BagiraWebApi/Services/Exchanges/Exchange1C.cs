@@ -1,6 +1,7 @@
 ﻿using BagiraWebApi.Models.Bagira;
 using BagiraWebApi.Services.Exchanges.DataModels;
 using BagiraWebApi.Services.Exchanges.DataModels.DTO;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
@@ -20,12 +21,17 @@ namespace BagiraWebApi.Services.Exchanges
         private readonly ILogger<Exchange1C> _logger;
         private readonly Soap1C _soap1C;
         private readonly ApplicationContext _context;
+        private readonly IOutputCacheStore _cache;
 
-        public Exchange1C(ILogger<Exchange1C> logger, IConfiguration configuration, ApplicationContext context)
+        public Exchange1C(ILogger<Exchange1C> logger, 
+            IConfiguration configuration, 
+            ApplicationContext context,
+            IOutputCacheStore cache)
         {
             _logger = logger;
             _soap1C = new(configuration);
             _context = context;
+            _cache = cache;
         }
 
         public async Task Update()
@@ -49,6 +55,18 @@ namespace BagiraWebApi.Services.Exchanges
                 + $"\nPrices:     {updatePricesResult}"
                 + $"\nProperty:   {updatePropertyValuesResult}"
                 );
+
+            if (updateGoodsResult.HasChangedParent)
+            {
+                await _cache.EvictByTagAsync("GoodsMenu", new CancellationToken());
+            }
+
+            if (updateGoodsResult.WasChanged || updatePricesResult.WasChanged ||
+                updateRestsResult.CreatedCount > 0 || updateRestsResult.DeletedCount > 0 ||
+                updatePropertyValuesResult.WasChanged)
+            {
+                await _cache.EvictByTagAsync("Goods", new CancellationToken());
+            }
         }
 
         private async Task<ExchangeResult> UpdateGoods()

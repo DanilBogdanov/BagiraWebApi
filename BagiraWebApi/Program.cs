@@ -13,12 +13,20 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-var connectionString = builder.Configuration.GetConnectionString("DebugConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<Exchange1C>();
 builder.Services.AddScoped<GoodService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddHostedService<Worker>();
+builder.Services.AddCors();
+builder.Services.AddOutputCache(oc =>
+{
+    oc.DefaultExpirationTimeSpan = TimeSpan.FromDays(1);
+    oc.AddPolicy("GoodsMenuTag", pb => pb.Tag("GoodsMenu"));
+    oc.AddPolicy("GoodsTag", pb => pb.Tag("Goods"));
+});
+
 
 var app = builder.Build();
 
@@ -29,6 +37,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors(builder => builder.AllowAnyOrigin());
+
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
@@ -37,9 +47,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/", (ApplicationContext db) =>
-{
-    return db.Goods.ToList();
-});
+app.UseOutputCache();
 
 app.Run();
