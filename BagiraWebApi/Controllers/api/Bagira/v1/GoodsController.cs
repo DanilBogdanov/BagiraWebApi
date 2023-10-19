@@ -1,5 +1,6 @@
 ﻿using BagiraWebApi.Services.Bagira;
 using BagiraWebApi.Services.Bagira.DataModels;
+using BagiraWebApi.Services.Exchanges;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
@@ -10,22 +11,31 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
     public class GoodsController : Controller
     {
         private readonly GoodService _goodService;
+        private Exchange1C _exchange;
 
-        public GoodsController(GoodService bagiraService)
+        public GoodsController(GoodService bagiraService, Exchange1C exchange1C)
         {
             _goodService = bagiraService;
+            _exchange = exchange1C;
         }
 
         [OutputCache(PolicyName = "GoodsTag")]
         [HttpGet("{goodId}")]
         public async Task<IActionResult> GetGoodAsync(int goodId)
         {
-            var goodDto = await _goodService.GetGoodAsync(goodId);
-            if (goodDto == null)
+            try
             {
-                return NotFound();
+                var goodDto = await _goodService.GetGoodAsync(goodId);
+                if (goodDto == null)
+                {
+                    return NotFound();
+                }
+                return Ok(goodDto);
             }
-            return Ok(goodDto);
+            catch (Exception ex)
+            {
+                return Ok(ex.ToString());
+            }
         }
 
         [OutputCache(PolicyName = "GoodsTag")]

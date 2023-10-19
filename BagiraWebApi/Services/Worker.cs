@@ -17,17 +17,18 @@ namespace BagiraWebApi.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    Console.WriteLine("Start Worker =====================");
+                    _logger.LogInformation($"Start Worker: {DateTime.Now} =====================");
                     using var scope = _serviceProvider.CreateScope();
                     var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
                     await exchange1C.Update();
                 } catch (Exception ex)
                 {
-                    _logger.LogError(ex.Message);
+                    _logger.LogError(ex.ToString());
                 }
                 
                 await Task.Delay(TimeSpan.FromHours(1), stoppingToken);                

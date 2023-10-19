@@ -3,13 +3,7 @@ using BagiraWebApi.Services.Exchanges.DataModels;
 using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
-using Microsoft.VisualBasic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 using static BagiraWebApi.Services.Exchanges.Comparators;
 
 namespace BagiraWebApi.Services.Exchanges
@@ -32,7 +26,12 @@ namespace BagiraWebApi.Services.Exchanges
             _soap1C = new(configuration);
             _context = context;
             _cache = cache;
-        }
+            var imgDirectory = $"wwwroot/{IMG_FOLDER}";
+            if (!Directory.Exists(imgDirectory))
+            {
+                Directory.CreateDirectory(imgDirectory);
+            }
+        }       
 
         public async Task Update()
         {
@@ -47,7 +46,7 @@ namespace BagiraWebApi.Services.Exchanges
             var updatePropertyValuesResult = await UpdatePropertyValues();
             stopwatch.Stop();
 
-            _logger.LogInformation($">>>>>>>>>>>>>> Exchange 1c: Done in {stopwatch.Elapsed.Seconds}sec"
+            _logger.LogInformation($">>>>>>>>>>>>>> Exchange 1c: Done in {stopwatch.Elapsed.TotalSeconds}sec"
                 + $"\nGoods:      {updateGoodsResult}"
                 + $"\nStorages:   {updateStoragesResult}"
                 + $"\nRests:      {updateRestsResult}"
@@ -55,7 +54,7 @@ namespace BagiraWebApi.Services.Exchanges
                 + $"\nPrices:     {updatePricesResult}"
                 + $"\nProperty:   {updatePropertyValuesResult}"
                 );
-
+            
             if (updateGoodsResult.HasChangedParent)
             {
                 await _cache.EvictByTagAsync("GoodsMenu", new CancellationToken());
@@ -205,7 +204,7 @@ namespace BagiraWebApi.Services.Exchanges
                     imgExt = ".jpg";
                 }
                 string filePath = $"{IMG_FOLDER}/{id}{imgExt}";
-                using (BinaryWriter writer = new BinaryWriter(File.Open($"wwwroot/{filePath}", FileMode.Create)))
+                using (BinaryWriter writer = new BinaryWriter(File.Create($"wwwroot/{filePath}")))
                 {
                     writer.Write(Convert.FromBase64String(imgBinary));
                 }
@@ -218,7 +217,11 @@ namespace BagiraWebApi.Services.Exchanges
         {
             if (filePath != null)
             {
-                File.Delete($"wwwroot/{filePath}");
+                try
+                {
+                    File.Delete($"wwwroot/{filePath}");
+                }
+                catch { }
             }
         }
 
