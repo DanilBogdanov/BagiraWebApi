@@ -11,12 +11,51 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
     public class GoodsController : Controller
     {
         private readonly GoodService _goodService;
-        private Exchange1C _exchange;
 
         public GoodsController(GoodService bagiraService, Exchange1C exchange1C)
         {
             _goodService = bagiraService;
-            _exchange = exchange1C;
+        }
+
+        [OutputCache(PolicyName = "GoodsTag")]
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchAsync(
+            string query, 
+            int? take,
+            int? skip)
+        {
+            try
+            {
+                var queryProps = new BagiraQueryProps
+                {
+                    Query = query,
+                    Take = take,
+                    Skip = skip
+                };
+                var goodsDto = await _goodService.SearchAsync(queryProps);
+
+                return Ok(goodsDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.ToString());
+            }
+        }
+
+        [OutputCache(PolicyName = "GoodsTag")]
+        [HttpGet("groups")]
+        public async Task<IActionResult> GetGoodGroupsAsync()
+        {
+            try
+            {
+                var goodGroupsDto = await _goodService.GetGoodGroupsAsync();
+                
+                return Ok(goodGroupsDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.ToString());
+            }
         }
 
         [OutputCache(PolicyName = "GoodsTag")]
@@ -34,8 +73,27 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
             }
             catch (Exception ex)
             {
-                return Ok(ex.ToString());
+                return StatusCode(500, ex.ToString());
             }
+        }
+
+        [OutputCache(PolicyName = "GoodsTag")]
+        [HttpGet]
+        public async Task<IActionResult> GetGoodsAsync(
+            int? groupId,
+            int? take,
+            int? skip)
+        {
+            var queryProps = new BagiraQueryProps
+            {
+                GroupId = groupId,
+                Take = take,
+                Skip = skip
+            };
+
+            var catGoodsDto = await _goodService.GetGoodsAsync(queryProps);
+
+            return Ok(catGoodsDto);
         }
 
         [OutputCache(PolicyName = "GoodsTag")]
@@ -59,7 +117,7 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
 
         [OutputCache(PolicyName = "GoodsTag")]
         [HttpGet("dogs")]
-        public async Task<IActionResult> GetDogGoodsOfGroupAsync(
+        public async Task<IActionResult> GetDogGoodsAsync(
             int? groupId,
             int? take,
             int? skip)
@@ -77,7 +135,7 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
 
         [OutputCache(PolicyName = "GoodsTag")]
         [HttpGet("others")]
-        public async Task<IActionResult> GetOtherGoodsOfGroupAsync(
+        public async Task<IActionResult> GetOtherGoodsAsync(
             int? groupId,
             int? take,
             int? skip)

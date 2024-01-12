@@ -44,6 +44,8 @@ namespace BagiraWebApi.Services.Exchanges
             var updatePriceTypesResult = await UpdatePriceTypes();
             var updatePricesResult = await UpdatePrices();
             var updatePropertyValuesResult = await UpdatePropertyValues();
+            await UpdateKeywords(null, "");
+            await _context.SaveChangesAsync();
             stopwatch.Stop();
 
             _logger.LogInformation($">>>>>>>>>>>>>> Exchange 1c: Done in {stopwatch.Elapsed.TotalSeconds}sec"
@@ -55,17 +57,14 @@ namespace BagiraWebApi.Services.Exchanges
                 + $"\nProperty:   {updatePropertyValuesResult}"
                 );
             
-            if (updateGoodsResult.HasChangedParent)
-            {
-                await _cache.EvictByTagAsync("GoodsMenu", new CancellationToken());
-            }
-
             if (updateGoodsResult.WasChanged || updatePricesResult.WasChanged ||
                 updateRestsResult.CreatedCount > 0 || updateRestsResult.DeletedCount > 0 ||
                 updatePropertyValuesResult.WasChanged)
             {
+                await _cache.EvictByTagAsync("GoodsMenu", new CancellationToken());
                 await _cache.EvictByTagAsync("Goods", new CancellationToken());
             }
+
         }
 
         private async Task<ExchangeResult> UpdateGoods()
@@ -142,7 +141,6 @@ namespace BagiraWebApi.Services.Exchanges
                     var loadedGood = loadedGoods.Find(g => g.Id == good.Id);
                     if (loadedGood != null)
                     {
-                        Console.WriteLine(good.Name);
                         good.DataVersion = loadedGood.DataVersion;
                         if (good.ParentId != loadedGood.ParentId)
                         {
@@ -396,6 +394,25 @@ namespace BagiraWebApi.Services.Exchanges
                 UpdatedCount = itemsToUpdate.Count,
                 DeletedCount = itemsToDel.Count
             };
+        }
+
+        private async Task UpdateKeywords(int? parentId, string parentKeywords)
+        {
+            var goods = await _context.Goods.Where(g => g.ParentId == parentId).ToListAsync();
+
+            foreach(var good in goods)
+            {
+                if (good.IsGroup)
+                {
+                    good.KeyWords = $"{parentKeywords} {good.Name}";
+                    await UpdateKeywords(good.Id, good.KeyWords);
+                } else
+                {
+                    var prop = _context.GoodPropertyValues
+                        .FirstOrDefault(gpv => gpv.PropertyId == "М00000007" && gpv.GoodId == good.Id);
+                    good.KeyWords = $"{parentKeywords} {good.Name} {good.FullName} {prop?.Value ?? ""}";
+                }
+            }
         }
     }
 }

@@ -27,4 +27,8 @@
     <Folder Include="wwwroot\bagira\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\assets\index-4d87b717.js" />
+  </ItemGroup>
+
 </Project>

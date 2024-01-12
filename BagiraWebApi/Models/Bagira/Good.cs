@@ -13,5 +13,6 @@
         public string? ImgDataVersion { get; set; }
         public string? ImgUrl { get; set;}
         public string? ImgExt { get;set; }
+        public string? KeyWords { get; set; }
     }
 }

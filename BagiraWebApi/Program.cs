@@ -14,7 +14,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-var connectionString = builder.Configuration.GetConnectionString("RemoteConnection");
+//var connectionString = builder.Configuration.GetConnectionString("RemoteConnection");
+var connectionString = builder.Configuration.GetConnectionString("DebugConnection");
 builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<Exchange1C>();
 builder.Services.AddScoped<GoodService>();

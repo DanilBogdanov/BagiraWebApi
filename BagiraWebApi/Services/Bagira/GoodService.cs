@@ -2,6 +2,8 @@
 using BagiraWebApi.Services.Bagira.DataModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client.Extensions.Msal;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace BagiraWebApi.Services.Bagira
 {
@@ -16,6 +18,20 @@ namespace BagiraWebApi.Services.Bagira
             _configuration = configuration;
         }
 
+        public async Task<GoodsDTO> SearchAsync(BagiraQueryProps queryProps)
+        {
+            var goods = await GetGoodsAsync(queryProps);
+            return goods;
+        }
+
+        public async Task<List<GoodGroupDTO>> GetGoodGroupsAsync()
+        {
+            var groups = await _context.Goods.Where(g => g.IsGroup)
+                .Select(g => new GoodGroupDTO { Id = g.Id, Name = g.Name, Path = g.Path})
+                .ToListAsync();
+            return groups;
+        }
+
         public async Task<GoodDTO?> GetGoodAsync(int id)
         {
             var good = await _context.Goods.Where(g => !g.IsGroup)
@@ -24,12 +40,21 @@ namespace BagiraWebApi.Services.Bagira
             {
                 return null;
             }
+
+            var priceTypeConfigPath = "1c:DefaultPriceType";
+            var priceTypeConfigValue = _configuration[priceTypeConfigPath]
+                ?? throw new Exception($"Not found configuration: {priceTypeConfigPath}");
+            var priceTypeId = int.Parse(priceTypeConfigValue);
+            var price = await _context.GoodPrices
+                .FirstOrDefaultAsync(pr => pr.PriceTypeId == priceTypeId && pr.GoodId == id);
+
             return new GoodDTO
             {
                 Id = good.Id,
                 Name = good.FullName,
                 Description = good.Description,
                 ImgUrl = good.ImgUrl,
+                Price = price?.Price
             };
         }
 
@@ -40,7 +65,7 @@ namespace BagiraWebApi.Services.Bagira
                 ?? throw new Exception($"Not found configuration: {configPath}");
             var catValueIds = configValue.Split(",");
             queryProps.PropertyValuesIds = catValueIds;
-            var goods = await GetGoods(queryProps);
+            var goods = await GetGoodsAsync(queryProps);
             return goods;
         }
 
@@ -51,7 +76,7 @@ namespace BagiraWebApi.Services.Bagira
                 ?? throw new Exception($"Not found configuration: {configPath}");
             var dogValueIds = configValue.Split(",");
             queryProps.PropertyValuesIds = dogValueIds;
-            var goods = await GetGoods(queryProps);
+            var goods = await GetGoodsAsync(queryProps);
             return goods;
         }
 
@@ -62,11 +87,11 @@ namespace BagiraWebApi.Services.Bagira
                 ?? throw new Exception($"Not found configuration: {configPath}");
             var otherValueIds = configValue.Split(",");
             queryProps.PropertyValuesIds = otherValueIds;
-            var goods = await GetGoods(queryProps);
+            var goods = await GetGoodsAsync(queryProps);
             return goods;
         }
 
-        public async Task<GoodsDTO> GetGoods(BagiraQueryProps queryProps)
+        public async Task<GoodsDTO> GetGoodsAsync(BagiraQueryProps queryProps)
         {
             var take = queryProps.Take ?? 20;
             var skip = queryProps.Skip ?? 0;
@@ -81,9 +106,20 @@ namespace BagiraWebApi.Services.Bagira
                 ?? throw new Exception($"Not found configuration: {priceTypeConfigPath}");
             var priceTypeId = int.Parse(priceTypeConfigValue);
 
+            string? query = null;
+            if (queryProps.Query != null)
+            {
+                var pattern = @"\s+";
+                Regex rgx = new Regex(pattern);
+                var matches = rgx.Split(queryProps.Query.Trim());
+                query = "\"" + string.Join("*\" and \"", matches) + "*\"";
+                Console.WriteLine($"{queryProps.Query}:{query}");
+            }
+
             var goodsQuery = _context.Goods
                 .Where(good =>
-                    (queryProps.GroupId == null || good.Path.Contains($"/{queryProps.GroupId}/"))
+                    (query == null || good.KeyWords == null || EF.Functions.Contains(good.KeyWords, query))
+                    && (queryProps.GroupId == null || good.Path.Contains($"/{queryProps.GroupId}/"))
                     && !good.IsGroup
                     && good.ImgUrl != null
                     && _context.GoodRests

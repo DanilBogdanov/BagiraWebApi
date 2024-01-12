@@ -17,6 +17,13 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
         }
 
         [OutputCache(PolicyName = "GoodsMenuTag")]
+        [HttpGet]
+        public async Task<IActionResult> GetMenuAsync()
+        {
+            return Ok(await _bagiraService.GetMenuAsync(null));
+        }
+
+        [OutputCache(PolicyName = "GoodsMenuTag")]
         [HttpGet("cats")]
         public async Task<IActionResult> GetCatMenuAsync()
         {

@@ -48,7 +48,7 @@ namespace BagiraWebApi.Services.Bagira
             return menu;
         }
 
-        private async Task<List<MenuDTO>> GetMenuAsync(string[] valueIds)
+        public async Task<List<MenuDTO>> GetMenuAsync(string[]? valueIds)
         {
             var storageConfigPath = "1c:DefaultStorage";
             var storageConfigValue = _configuration[storageConfigPath]
@@ -64,11 +64,11 @@ namespace BagiraWebApi.Services.Bagira
                     && _context.Goods.Any(
                         good => good.Path.Contains("/" + g.Id + "/")
                         && good.ImgUrl != null
-                        && _context.GoodPropertyValues.Any(
+                        && (valueIds == null || _context.GoodPropertyValues.Any(
                             gpv => gpv.GoodId == good.Id
                             && gpv.PropertyId == animalPropertyId
                             && valueIds.Contains(gpv.ValueId)
-                            )
+                            ))
                         && _context.GoodRests.Any(goodRest => goodRest.GoodId == good.Id && goodRest.StorageId == storageId)
                         )
                     )

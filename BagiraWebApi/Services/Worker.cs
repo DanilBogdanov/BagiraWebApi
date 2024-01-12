@@ -22,7 +22,7 @@ namespace BagiraWebApi.Services
             {
                 try
                 {
-                    _logger.LogInformation($"Start Worker: {DateTime.Now} =====================");
+                    _logger.LogInformation($"Start Worker: {DateTime.UtcNow.AddHours(5)} =====================");
                     using var scope = _serviceProvider.CreateScope();
                     var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
                     await exchange1C.Update();

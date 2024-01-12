@@ -11,7 +11,7 @@
                 Directory.CreateDirectory(folder);
             }
              
-            filePath = $"{folder}/{DateTime.Today:dd-MM-yy}.txt";
+            filePath = $"{folder}/{DateTime.UtcNow.AddHours(5):dd-MM-yy}.txt";
         }
         public IDisposable BeginScope<TState>(TState state)
         {
