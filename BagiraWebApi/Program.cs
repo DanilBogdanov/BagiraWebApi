@@ -1,3 +1,4 @@
+using BagiraServer.Services.Parser;
 using BagiraWebApi;
 using BagiraWebApi.Services;
 using BagiraWebApi.Services.Bagira;
@@ -20,6 +21,7 @@ builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServe
 builder.Services.AddScoped<Exchange1C>();
 builder.Services.AddScoped<GoodService>();
 builder.Services.AddScoped<MenuService>();
+builder.Services.AddScoped<ParserService>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddCors();
 builder.Services.AddOutputCache(oc =>
@@ -47,6 +49,7 @@ app.UseCors(builder => builder.AllowAnyOrigin());
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

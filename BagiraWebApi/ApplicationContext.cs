@@ -1,4 +1,5 @@
 ﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Models.Parser;
 using Microsoft.EntityFrameworkCore;
 
 namespace BagiraWebApi
@@ -11,6 +12,10 @@ namespace BagiraWebApi
         public DbSet<GoodPriceType> GoodPriceTypes { get; set; } = null!;
         public DbSet<GoodPrice> GoodPrices { get; set; } = null!;
         public DbSet<GoodPropertyValue> GoodPropertyValues { get; set; } = null!;
+
+        //Parser
+        public DbSet<ParserGood> ParserGoods { get; set; } = null!;
+        public DbSet<ParserPage> ParserPages { get; set; } = null!;
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
@@ -27,6 +32,8 @@ namespace BagiraWebApi
             modelBuilder.Entity<GoodPrice>().HasKey(p => new { p.GoodId, p.PriceTypeId });
             modelBuilder.Entity<GoodPrice>().Property(p => p.Price).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<GoodPropertyValue>().HasKey(gp => new { gp.GoodId, gp.PropertyId });
+
+            modelBuilder.Entity<ParserGood>().HasKey(pg => new { pg.Id, pg.ParserCompanyId });
         }
     }
 }
