@@ -2,7 +2,6 @@
 using AngleSharp.Dom;
 using BagiraServer.Services.Parser;
 using BagiraWebApi.Models.Parser;
-using System;
 using IConfiguration = AngleSharp.IConfiguration;
 
 namespace BagiraWebApi.Services.Parser
@@ -106,7 +105,7 @@ namespace BagiraWebApi.Services.Parser
 
             try
             {
-                idValue = idValue.Split(":")[1].Trim();
+                idValue = idValue.Split(":")[1].Trim().Replace("00-", "");
                 int id = int.Parse(idValue);
 
                 return id;

@@ -1,6 +1,7 @@
 ﻿using BagiraWebApi;
 using BagiraWebApi.Models.Parser;
 using BagiraWebApi.Services.Parser;
+using BagiraWebApi.Services.Parser.DTO;
 using Microsoft.EntityFrameworkCore;
 
 namespace BagiraServer.Services.Parser
@@ -39,15 +40,36 @@ namespace BagiraServer.Services.Parser
             return _appContext.ParserGoods.AsNoTracking().Where(x => x.ParserCompanyId == parserCompanyId).Select(x => x.Brand).Distinct().ToList();
         }
 
-        public List<ParserGood> GetParserGoods(int parserCompanyId, string? brand)
+        public async Task<ParserGoodResponse<List<ParserGood>>> GetParserGoodsAsync(int parserCompanyId, string brand, ParserGoodRequestParam param)
         {
-            return _appContext.ParserGoods.AsNoTracking()
-                .Where(x => x.ParserCompanyId == parserCompanyId && (brand == null || x.Brand == brand))
+            var parserGoodQuery = _appContext.ParserGoods.AsNoTracking()
+                .Where(x => 
+                    x.ParserCompanyId == parserCompanyId 
+                    && x.Brand == brand
+                    && (param.HasLinkToBagira == null 
+                        || (param.HasLinkToBagira == true && x.GoodId != null)
+                        || (param.HasLinkToBagira == false && x.GoodId == null)
+                    )
+                );
+
+            var total = await parserGoodQuery.CountAsync();
+
+            var goods = await parserGoodQuery
                 .OrderBy(x => x.Name)
-                .ToList();
+                .Skip(param.Skip)
+                .Take(param.Take)
+                .ToListAsync();
+
+            return new ParserGoodResponse<List<ParserGood>>
+            {
+                Take = param.Take,
+                Skip = param.Skip,
+                Total = total,
+                Result = goods
+            };
         }
 
-        public ParserGood? SetLinkToBagira(int parserGoodId, int parserCompanyId, int goodId)
+        public int? SetLinkToBagira(int parserCompanyId, int parserGoodId, int goodId)
         {
             var parserGood = _appContext.ParserGoods.Find(parserGoodId, parserCompanyId);
 
@@ -55,7 +77,7 @@ namespace BagiraServer.Services.Parser
             {
                 parserGood.GoodId = goodId;
                 _appContext.SaveChanges();
-                return parserGood;
+                return parserGood.GoodId;
             }
 
             return null;
@@ -75,8 +97,8 @@ namespace BagiraServer.Services.Parser
 
         public ParserPage? UpdateParserPage(ParserPage parserPage)
         {
-            var page = _appContext.ParserPages.Find(parserPage.Id);
-            if (page == null) return null;
+            var pageExist = _appContext.ParserPages.AsNoTracking().Any(page => page.Id == parserPage.Id);
+            if (!pageExist) return null;
 
             var entity = _appContext.Update(parserPage).Entity;
             _appContext.SaveChanges();
@@ -104,6 +126,16 @@ namespace BagiraServer.Services.Parser
             }
 
             return null;
+        }
+
+        public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync()
+        {
+            var names = await _appContext.Goods
+                .Where(good => !good.IsGroup)
+                .Select(good => new BagiraGoodNameDTO { Id = good.Id, Name = good.Name })
+                .ToListAsync();
+
+            return names;
         }
 
         private async Task ParseAsync(IParser parser)

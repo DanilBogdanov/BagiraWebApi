@@ -1,6 +1,4 @@
-﻿using BagiraWebApi.Models.Bagira;
-
-namespace BagiraWebApi.Models.Parser
+﻿namespace BagiraWebApi.Models.Parser
 {
     public class ParserGood
     {

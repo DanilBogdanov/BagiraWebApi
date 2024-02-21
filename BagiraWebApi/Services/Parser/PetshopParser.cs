@@ -24,21 +24,21 @@ namespace BagiraServer.Services.Parser
         public async Task<List<ParserGood>> ParseAsync(string url)
         {
             await LoadHtmlAsync(url);
-            CheckCityUfa();            
+            CheckCityUfa();
             var goods = new List<ParserGood>();
 
             var petshopPage = GetPetshopPage();
 
             if (petshopPage.Products.TotalPages > 0)
             {
-                for (int i = 1; i <= petshopPage.Products.TotalPages;  i++)
+                for (int i = 1; i <= petshopPage.Products.TotalPages; i++)
                 {
                     await LoadHtmlAsync(url + $"?page={i}&sb=name&so=asc&pctgr=");
                     petshopPage = GetPetshopPage();
                     goods.AddRange(ParsePage(petshopPage.Products.Products));
                 }
             }
-            
+
             return goods;
         }
 
@@ -65,7 +65,7 @@ namespace BagiraServer.Services.Parser
         private List<ParserGood> ParsePage(List<Product> products)
         {
             List<ParserGood> parserGoods = new();
-            
+
             foreach (var product in products)
             {
                 foreach (var offer in product.Offers)
@@ -76,7 +76,7 @@ namespace BagiraServer.Services.Parser
                         ParserCompanyId = ParserCompanyId,
                         LastUpdated = DateTime.UtcNow.AddHours(5),
                         Brand = product.Brand,
-                        Name = product.Title, 
+                        Name = product.Title,
                         Weight = (offer.Weight / 1000.0) + "кг",
                         ImgUrl = product.Photo?.Src
                     };
@@ -84,7 +84,8 @@ namespace BagiraServer.Services.Parser
                     if (offer.Prices.DiscountPercent == 0)
                     {
                         parserGood.Price = offer.Prices.Price;
-                    } else
+                    }
+                    else
                     {
                         parserGood.Price = offer.Prices.OldPrice;
                         parserGood.SalePrice = offer.Prices.Price;
@@ -96,7 +97,7 @@ namespace BagiraServer.Services.Parser
 
             return parserGoods;
         }
-                
+
         private void CheckCityUfa()
         {
             var cityNode = _htmlDocument.DocumentNode.SelectSingleNode("//button[@data-testid=\"City\"]");
@@ -110,7 +111,7 @@ namespace BagiraServer.Services.Parser
 
         private class PetshopPage
         {
-            public ProductsPage Products { get; set; } = null!;            
+            public ProductsPage Products { get; set; } = null!;
         }
 
         private class ProductsPage
