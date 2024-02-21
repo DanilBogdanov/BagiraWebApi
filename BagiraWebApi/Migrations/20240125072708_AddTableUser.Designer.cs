@@ -4,6 +4,7 @@ using BagiraWebApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BagiraWebApi.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20240125072708_AddTableUser")]
+    partial class AddTableUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,28 +24,6 @@ namespace BagiraWebApi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("BagiraWebApi.Models.Auth.Session", b =>
-                {
-                    b.Property<Guid>("SessionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("Expires")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("SessionToken")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("SessionId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Sessions");
-                });
 
             modelBuilder.Entity("BagiraWebApi.Models.Auth.User", b =>
                 {
@@ -261,21 +242,6 @@ namespace BagiraWebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ParserPages");
-                });
-
-            modelBuilder.Entity("BagiraWebApi.Models.Auth.Session", b =>
-                {
-                    b.HasOne("BagiraWebApi.Models.Auth.User", "User")
-                        .WithMany("Sessions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("BagiraWebApi.Models.Auth.User", b =>
-                {
-                    b.Navigation("Sessions");
                 });
 #pragma warning restore 612, 618
         }
