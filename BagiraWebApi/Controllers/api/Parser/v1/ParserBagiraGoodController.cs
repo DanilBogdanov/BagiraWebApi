@@ -23,5 +23,14 @@ namespace BagiraWebApi.Controllers.api.Parser.v1
 
             return Ok(names);
         }
+
+        [OutputCache]
+        [HttpGet("menu")]
+        public async Task<IActionResult> GetBagiraMenuAsync()
+        {
+            var menu = await _parserService.GetBagiraMenuAsync();
+
+            return Ok(menu);
+        }
     }
 }
