@@ -1,11 +1,7 @@
 ﻿using BagiraWebApi.Models.Bagira;
 using BagiraWebApi.Services.Exchanges.DataModels;
-using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using Newtonsoft.Json;
-using System.IO;
-using System.Linq;
 using System.Net;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace BagiraWebApi.Services.Exchanges
 {

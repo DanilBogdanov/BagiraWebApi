@@ -1,6 +1,4 @@
-﻿using BagiraWebApi.Services.Bagira;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace BagiraWebApi.Controllers.api.Bagira.v1
 {

@@ -1,5 +1,5 @@
-﻿using BagiraWebApi.Models.Bagira.DTO;
-using BagiraWebApi.Models.Bagira;
+﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Models.Bagira.DTO;
 using Microsoft.EntityFrameworkCore;
 
 namespace BagiraWebApi.Services.Bagira

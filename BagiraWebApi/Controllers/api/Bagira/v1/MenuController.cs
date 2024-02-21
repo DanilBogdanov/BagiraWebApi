@@ -1,19 +1,18 @@
 ﻿using BagiraWebApi.Services.Bagira;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 
 namespace BagiraWebApi.Controllers.api.Bagira.v1
 {
     [Route("api/bagira/v1/[controller]")]
-    [ApiController]    
+    [ApiController]
     public class MenuController : ControllerBase
     {
         private MenuService _bagiraService;
 
         public MenuController(MenuService bagiraService)
         {
-            _bagiraService = bagiraService;       
+            _bagiraService = bagiraService;
         }
 
         [OutputCache(PolicyName = "GoodsMenuTag")]

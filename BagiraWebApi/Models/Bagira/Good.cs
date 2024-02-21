@@ -9,10 +9,10 @@
         public string Name { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string Path {  get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
         public string? ImgDataVersion { get; set; }
-        public string? ImgUrl { get; set;}
-        public string? ImgExt { get;set; }
+        public string? ImgUrl { get; set; }
+        public string? ImgExt { get; set; }
         public string? KeyWords { get; set; }
     }
 }

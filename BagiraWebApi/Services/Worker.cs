@@ -4,12 +4,12 @@ using BagiraWebApi.Services.Exchanges;
 
 namespace BagiraWebApi.Services
 {
-    public class Worker: BackgroundService
+    public class Worker : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<Worker> _logger;
 
-        public Worker(IServiceProvider serviceProvider, ILogger<Worker> logger) 
+        public Worker(IServiceProvider serviceProvider, ILogger<Worker> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
@@ -18,31 +18,77 @@ namespace BagiraWebApi.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await Task.Delay(TimeSpan.FromMinutes(0), stoppingToken);
-            try
-            {
-            //Exchange1c(stoppingToken);   
-            _logger.LogInformation($"Start Worker: {DateTime.UtcNow.AddHours(5)} =====================");
-            using var scope = _serviceProvider.CreateScope();
-            var parser = scope.ServiceProvider.GetRequiredService<ParserService>();
-            await parser.UpdateParserGoodsAsync();
+            // var updateGoodTask = UpdateGoods(stoppingToken);
+            // var updateParserGoodsTask = UpdateParserGoods(stoppingToken);
 
-            } catch(Exception ex)
+            // await Task.WhenAll(updateGoodTask, updateParserGoodsTask);
+
+            /*while (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogError(ex.Message);
-            }
+                try
+                {
+                    _logger.LogInformation($"Start Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
+                    using var scope = _serviceProvider.CreateScope();
+                    var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
+                    await exchange1C.Update();
+                    _logger.LogInformation($"Stop Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+
+                try
+                {
+                    _logger.LogInformation($"Start Worker - Parser: {DateTime.UtcNow.AddHours(5)} =====================");
+                    using var scope = _serviceProvider.CreateScope();
+                    var parser = scope.ServiceProvider.GetRequiredService<ParserService>();
+                    await parser.UpdateParserGoodsAsync();
+                    _logger.LogInformation($"Stop Worker - Parser: {DateTime.UtcNow.AddHours(5)} =====================");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+            }*/
         }
 
-        private async void UpdateGoods(CancellationToken stoppingToken)
+        private async Task UpdateGoods(CancellationToken stoppingToken)
         {
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    _logger.LogInformation($"Start Worker: {DateTime.UtcNow.AddHours(5)} =====================");
+                    _logger.LogInformation($"Start Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
                     using var scope = _serviceProvider.CreateScope();
                     var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
                     await exchange1C.Update();
+                    _logger.LogInformation($"Stop Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+            }
+        }
+
+        private async Task UpdateParserGoods(CancellationToken stoppingToken)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    _logger.LogInformation($"Start Worker - Parser: {DateTime.UtcNow.AddHours(5)} =====================");
+                    using var scope = _serviceProvider.CreateScope();
+                    var parser = scope.ServiceProvider.GetRequiredService<ParserService>();
+                    await parser.UpdateParserGoodsAsync();
+                    _logger.LogInformation($"Stop Worker - Parser: {DateTime.UtcNow.AddHours(5)} =====================");
                 }
                 catch (Exception ex)
                 {

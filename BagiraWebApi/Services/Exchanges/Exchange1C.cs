@@ -17,8 +17,8 @@ namespace BagiraWebApi.Services.Exchanges
         private readonly ApplicationContext _context;
         private readonly IOutputCacheStore _cache;
 
-        public Exchange1C(ILogger<Exchange1C> logger, 
-            IConfiguration configuration, 
+        public Exchange1C(ILogger<Exchange1C> logger,
+            IConfiguration configuration,
             ApplicationContext context,
             IOutputCacheStore cache)
         {
@@ -31,7 +31,7 @@ namespace BagiraWebApi.Services.Exchanges
             {
                 Directory.CreateDirectory(imgDirectory);
             }
-        }       
+        }
 
         public async Task Update()
         {
@@ -56,7 +56,7 @@ namespace BagiraWebApi.Services.Exchanges
                 + $"\nPrices:     {updatePricesResult}"
                 + $"\nProperty:   {updatePropertyValuesResult}"
                 );
-            
+
             if (updateGoodsResult.WasChanged || updatePricesResult.WasChanged ||
                 updateRestsResult.CreatedCount > 0 || updateRestsResult.DeletedCount > 0 ||
                 updatePropertyValuesResult.WasChanged)
@@ -184,8 +184,8 @@ namespace BagiraWebApi.Services.Exchanges
 
         private async Task DeleteGoods(List<int> ids)
         {
-            var imgUrls = _context.Goods.Where(g =>  ids.Contains(g.Id) && g.ImgUrl != null).Select(g => g.ImgUrl);
-            foreach(var imgUrl in imgUrls)
+            var imgUrls = _context.Goods.Where(g => ids.Contains(g.Id) && g.ImgUrl != null).Select(g => g.ImgUrl);
+            foreach (var imgUrl in imgUrls)
             {
                 DeleteImg(imgUrl);
             }
@@ -201,8 +201,8 @@ namespace BagiraWebApi.Services.Exchanges
                 {
                     imgExt = ".jpg";
                 }
-                string filePath = $"{IMG_FOLDER}/{id}{imgExt}";
-                using (BinaryWriter writer = new BinaryWriter(File.Create($"wwwroot/{filePath}")))
+                string filePath = $"{IMG_FOLDER}\\{id}{imgExt}";
+                using (BinaryWriter writer = new(File.Open($"wwwroot/{filePath}", FileMode.OpenOrCreate, FileAccess.ReadWrite)))
                 {
                     writer.Write(Convert.FromBase64String(imgBinary));
                 }
@@ -305,22 +305,23 @@ namespace BagiraWebApi.Services.Exchanges
             //Add
             var itemsToAdd = loadedGoodPrices.Except(dbGoodPrices, idComparator).ToList();
             await _context.AddRangeAsync(itemsToAdd);
-            
+
             //Delete
             var itemsToDel = dbGoodPrices.Except(loadedGoodPrices, idComparator).ToList();
             _context.RemoveRange(itemsToDel);
-            
+
 
             //Update
             var loadedToUpdate = loadedGoodPrices.Intersect(dbGoodPrices, idComparator).ToList();
             var dbToUpdate = dbGoodPrices.Intersect(loadedGoodPrices, idComparator).ToList();
             var itemsToUpdate = loadedToUpdate.Except(dbToUpdate, new GoodPriceFullComparator()).ToList();
             _context.UpdateRange(itemsToUpdate);
-            
+
             await _context.SaveChangesAsync();
             stopwatch.Stop();
 
-            return new ExchangeResult {
+            return new ExchangeResult
+            {
                 ElapsedSec = stopwatch.Elapsed.TotalSeconds,
                 CreatedCount = itemsToAdd.Count,
                 UpdatedCount = itemsToUpdate.Count,
@@ -335,7 +336,7 @@ namespace BagiraWebApi.Services.Exchanges
 
             var loadedGoodRests = await _soap1C.GetRestOfGoods();
             var dbGoodRests = _context.GoodRests.AsNoTracking().ToList();
-            
+
             //Add
             var itemsToAdd = loadedGoodRests.Except(dbGoodRests, new GoodRestIdComparator()).ToList();
             _context.AddRange(itemsToAdd);
@@ -400,13 +401,14 @@ namespace BagiraWebApi.Services.Exchanges
         {
             var goods = await _context.Goods.Where(g => g.ParentId == parentId).ToListAsync();
 
-            foreach(var good in goods)
+            foreach (var good in goods)
             {
                 if (good.IsGroup)
                 {
                     good.KeyWords = $"{parentKeywords} {good.Name}";
                     await UpdateKeywords(good.Id, good.KeyWords);
-                } else
+                }
+                else
                 {
                     var prop = _context.GoodPropertyValues
                         .FirstOrDefault(gpv => gpv.PropertyId == "М00000007" && gpv.GoodId == good.Id);

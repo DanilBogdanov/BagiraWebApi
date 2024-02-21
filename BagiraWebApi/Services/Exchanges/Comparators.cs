@@ -1,5 +1,4 @@
 ﻿using BagiraWebApi.Models.Bagira;
-using BagiraWebApi.Services.Exchanges.DataModels;
 using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using System.Diagnostics.CodeAnalysis;
 
@@ -140,7 +139,7 @@ namespace BagiraWebApi.Services.Exchanges
                 return HashCode.Combine(obj.GoodId, obj.PriceTypeId, obj.Price);
             }
         }
-        
+
         public class GoodPropertyValueIdComparator : IEqualityComparer<GoodPropertyValue>
         {
             public bool Equals(GoodPropertyValue? x, GoodPropertyValue? y)

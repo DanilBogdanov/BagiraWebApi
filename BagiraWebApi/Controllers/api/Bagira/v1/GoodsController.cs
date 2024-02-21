@@ -20,7 +20,7 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
         [OutputCache(PolicyName = "GoodsTag")]
         [HttpGet("search")]
         public async Task<IActionResult> SearchAsync(
-            string query, 
+            string query,
             int? take,
             int? skip)
         {
@@ -49,7 +49,7 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
             try
             {
                 var goodGroupsDto = await _goodService.GetGoodGroupsAsync();
-                
+
                 return Ok(goodGroupsDto);
             }
             catch (Exception ex)

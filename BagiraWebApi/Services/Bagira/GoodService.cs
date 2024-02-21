@@ -1,8 +1,6 @@
 ﻿using BagiraWebApi.Models.Bagira.DTO;
 using BagiraWebApi.Services.Bagira.DataModels;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client.Extensions.Msal;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace BagiraWebApi.Services.Bagira
@@ -27,7 +25,7 @@ namespace BagiraWebApi.Services.Bagira
         public async Task<List<GoodGroupDTO>> GetGoodGroupsAsync()
         {
             var groups = await _context.Goods.Where(g => g.IsGroup)
-                .Select(g => new GoodGroupDTO { Id = g.Id, Name = g.Name, Path = g.Path})
+                .Select(g => new GoodGroupDTO { Id = g.Id, Name = g.Name, Path = g.Path })
                 .ToListAsync();
             return groups;
         }
@@ -100,7 +98,7 @@ namespace BagiraWebApi.Services.Bagira
             var storageConfigValue = _configuration[storageConfigPath]
                 ?? throw new Exception($"Not found configuration: {storageConfigPath}");
             var storageId = int.Parse(storageConfigValue);
-            
+
             var priceTypeConfigPath = "1c:DefaultPriceType";
             var priceTypeConfigValue = _configuration[priceTypeConfigPath]
                 ?? throw new Exception($"Not found configuration: {priceTypeConfigPath}");
@@ -146,10 +144,10 @@ namespace BagiraWebApi.Services.Bagira
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();
-            
-            return new GoodsDTO 
-            { 
-                Take = take, 
+
+            return new GoodsDTO
+            {
+                Take = take,
                 Skip = skip,
                 Count = goodsCount,
                 Results = goods

@@ -1,4 +1,5 @@
-﻿using BagiraWebApi.Models.Bagira;
+﻿using BagiraWebApi.Models.Auth;
+using BagiraWebApi.Models.Bagira;
 using BagiraWebApi.Models.Parser;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +7,8 @@ namespace BagiraWebApi
 {
     public class ApplicationContext : DbContext
     {
+        public DbSet<User> Users { get; set; }
+        public DbSet<Session> Sessions { get; set; }
         public DbSet<Good> Goods { get; set; } = null!;
         public DbSet<GoodStorage> GoodStorages { get; set; } = null!;
         public DbSet<GoodRest> GoodRests { get; set; } = null!;
@@ -24,6 +27,7 @@ namespace BagiraWebApi
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Session>().HasOne(s => s.User).WithMany(s => s.Sessions).OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<Good>().Property(g => g.Id).ValueGeneratedNever();
             modelBuilder.Entity<Good>().HasIndex(g => g.Path);
             modelBuilder.Entity<GoodStorage>().Property(g => g.Id).ValueGeneratedNever();
