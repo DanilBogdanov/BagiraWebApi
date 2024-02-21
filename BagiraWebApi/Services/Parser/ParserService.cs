@@ -1,4 +1,6 @@
 ﻿using BagiraWebApi;
+using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Models.Bagira.DTO;
 using BagiraWebApi.Models.Parser;
 using BagiraWebApi.Services.Parser;
 using BagiraWebApi.Services.Parser.DTO;
@@ -43,10 +45,10 @@ namespace BagiraServer.Services.Parser
         public async Task<ParserGoodResponse<List<ParserGood>>> GetParserGoodsAsync(int parserCompanyId, string brand, ParserGoodRequestParam param)
         {
             var parserGoodQuery = _appContext.ParserGoods.AsNoTracking()
-                .Where(x => 
-                    x.ParserCompanyId == parserCompanyId 
+                .Where(x =>
+                    x.ParserCompanyId == parserCompanyId
                     && x.Brand == brand
-                    && (param.HasLinkToBagira == null 
+                    && (param.HasLinkToBagira == null
                         || (param.HasLinkToBagira == true && x.GoodId != null)
                         || (param.HasLinkToBagira == false && x.GoodId == null)
                     )
@@ -136,6 +138,41 @@ namespace BagiraServer.Services.Parser
                 .ToListAsync();
 
             return names;
+        }
+
+        public async Task<List<ParserBagiraMenuDTO>> GetBagiraMenuAsync()
+        {
+            var groups = await _appContext.Goods
+                .Where(group =>
+                    group.IsGroup
+                    && _appContext.Goods.Any
+                        (g => !g.IsGroup
+                            && g.Path.Contains("/" + group.Id + "/")
+                            && _appContext.ParserGoods.Any(parserGood => parserGood.GoodId == g.Id)
+                        )
+                    )
+                .ToListAsync();
+
+            var menu = MakeMenu(groups, null);
+
+            return menu;
+        }
+
+        private List<ParserBagiraMenuDTO> MakeMenu(List<Good> groups, int? parentId)
+        {
+            var menu = groups.Where(gr => gr.ParentId == parentId)
+                .Select(group => new ParserBagiraMenuDTO { Id = group.Id, Name = group.Name, Path = group.Path })
+                .ToList();
+
+            foreach (var item in menu)
+            {
+                if (groups.Any(gr => gr.ParentId == item.Id))
+                {
+                    item.Children = MakeMenu(groups, item.Id);
+                }
+            }
+
+            return menu;
         }
 
         private async Task ParseAsync(IParser parser)
