@@ -4,6 +4,7 @@ using BagiraWebApi.Models.Bagira.DTO;
 using BagiraWebApi.Models.Parser;
 using BagiraWebApi.Services.Parser;
 using BagiraWebApi.Services.Parser.DTO;
+using BagiraWebApi.Services.Parser.Parsers;
 using Microsoft.EntityFrameworkCore;
 
 namespace BagiraServer.Services.Parser

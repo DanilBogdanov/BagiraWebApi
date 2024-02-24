@@ -1,10 +1,9 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
-using BagiraServer.Services.Parser;
 using BagiraWebApi.Models.Parser;
 using IConfiguration = AngleSharp.IConfiguration;
 
-namespace BagiraWebApi.Services.Parser
+namespace BagiraWebApi.Services.Parser.Parsers
 {
     public class VetnaParser : IParser
     {
