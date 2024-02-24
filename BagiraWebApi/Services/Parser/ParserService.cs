@@ -67,7 +67,7 @@ namespace BagiraServer.Services.Parser
             return _appContext.ParserGoods.AsNoTracking().Where(x => x.ParserCompanyId == parserCompanyId).Select(x => x.Brand).Distinct().ToList();
         }
 
-        public async Task<ParserGoodResponse<List<ParserGood>>> GetParserGoodsAsync(int parserCompanyId, string brand, ParserGoodRequestParam param)
+        public async Task<ParserGoodResponse<ParserGood>> GetParserGoodsAsync(int parserCompanyId, string brand, ParserGoodRequestParam param)
         {
             var parserGoodQuery = _appContext.ParserGoods.AsNoTracking()
                 .Where(x =>
@@ -87,7 +87,7 @@ namespace BagiraServer.Services.Parser
                 .Take(param.Take)
                 .ToListAsync();
 
-            return new ParserGoodResponse<List<ParserGood>>
+            return new ParserGoodResponse<ParserGood>
             {
                 Take = param.Take,
                 Skip = param.Skip,
@@ -110,24 +110,29 @@ namespace BagiraServer.Services.Parser
             return null;
         }
 
-        public async Task<List<ParserPage>> GetParserPagesAsync(int parserCompanyId) 
-            => await PagesService.GetPagesAsync(parserCompanyId);
-        
-        public ParserPage AddParserPage(ParserPage parserPage)
-            => PagesService.AddParserPage(parserPage);
+        public async Task<List<ParserPage>> GetParserPagesAsync(int parserCompanyId) =>
+            await PagesService.GetPagesAsync(parserCompanyId);
 
-        public ParserPage? UpdateParserPage(ParserPage parserPage)
-            => PagesService.UpdatePage(parserPage);
+        public ParserPage AddParserPage(ParserPage parserPage) =>
+            PagesService.AddParserPage(parserPage);
 
-        public bool? UpdatePageIsActive(int pageId, bool isActive)
-            => PagesService.UpdatePageIsActive(pageId, isActive);
+        public ParserPage? UpdateParserPage(ParserPage parserPage) =>
+            PagesService.UpdatePage(parserPage);
 
-        public ParserPage? DeleteParserPage(int parserPageId)
-            => PagesService.DeletePage(parserPageId);
+        public bool? UpdatePageIsActive(int pageId, bool isActive) =>
+            PagesService.UpdatePageIsActive(pageId, isActive);
 
-        public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync() => await BagiraService.GetGoodNamesAsync();
+        public ParserPage? DeleteParserPage(int parserPageId) =>
+            PagesService.DeletePage(parserPageId);
 
-        public async Task<List<ParserBagiraMenuDTO>> GetBagiraMenuAsync() => await BagiraService.GetMenuAsync();
+        public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync() =>
+            await BagiraService.GetGoodNamesAsync();
+
+        public async Task<List<ParserBagiraMenuDTO>> GetBagiraMenuAsync() =>
+            await BagiraService.GetMenuAsync();
+
+        public async Task<ParserGoodResponse<ParserBagiraGoodDTO>> GetBagiraGoodsAsync(int? parentId, int take, int skip) =>
+            await BagiraService.GetGoodsAsync(parentId, take, skip);
 
 
         private async Task ParseAsync(IParser parser)

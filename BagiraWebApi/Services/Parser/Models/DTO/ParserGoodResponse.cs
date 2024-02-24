@@ -7,6 +7,6 @@ namespace BagiraWebApi.Services.Parser.Models.DTO
         public int Take { get; set; }
         public int Skip { get; set; }
         public int Total { get; set; }
-        public required T Result { get; set; }
+        public required List<T> Result { get; set; }
     }
 }

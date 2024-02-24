@@ -1,4 +1,5 @@
-﻿using BagiraWebApi.Models.Parser;
+﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Models.Parser;
 
 namespace BagiraWebApi.Services.Parser.Models.DTO
 {

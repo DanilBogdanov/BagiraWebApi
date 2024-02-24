@@ -1,4 +1,5 @@
 ﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Models.Parser;
 using BagiraWebApi.Services.Parser.Models.DTO;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -22,6 +23,45 @@ namespace BagiraWebApi.Services.Parser.Services
                 .ToListAsync();
 
             return names;
+        }
+
+        public async Task<ParserGoodResponse<ParserBagiraGoodDTO>> GetGoodsAsync(int? parentId, int take, int skip)
+        {
+            var goodsQuery = _context.Goods
+                .Where(good =>
+                    !good.IsGroup
+                    && (parentId == null ||
+                        good.Path.Contains($"/{parentId}/")
+                    )
+                    && _context.ParserGoods.Any(parserGood => parserGood.GoodId == good.Id)
+                );
+
+            var total = await goodsQuery.CountAsync();
+
+            GoodPrice defaultPrice = new() { Price = 0 };
+            var goods = await goodsQuery
+                .Select(good => new ParserBagiraGoodDTO
+                {
+                    Id = good.Id,
+                    Name = good.Name,
+                    Price = (_context.GoodPrices
+                                .FirstOrDefault(gp => gp.GoodId == good.Id && gp.PriceTypeId == 7) ?? defaultPrice).Price,
+                    ParserGoods = _context.ParserGoods
+                                      .Where(parserGood => parserGood.GoodId == good.Id)
+                                      .ToList()
+                })
+                .OrderBy(good => good.Name)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+
+            return new ParserGoodResponse<ParserBagiraGoodDTO>
+            {
+                Take = take,
+                Skip = skip,
+                Total = total,
+                Result = goods
+            };
         }
 
         public async Task<List<ParserBagiraMenuDTO>> GetMenuAsync()
