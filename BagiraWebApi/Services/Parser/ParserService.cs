@@ -2,8 +2,10 @@
 using BagiraWebApi.Models.Bagira;
 using BagiraWebApi.Models.Bagira.DTO;
 using BagiraWebApi.Models.Parser;
-using BagiraWebApi.Services.Parser;
-using BagiraWebApi.Services.Parser.DTO;
+using BagiraWebApi.Services.Parser.Models;
+using BagiraWebApi.Services.Parser.Models.DTO;
+using BagiraWebApi.Services.Parser.Parsers;
+using BagiraWebApi.Services.Parser.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace BagiraServer.Services.Parser
@@ -14,6 +16,29 @@ namespace BagiraServer.Services.Parser
         private readonly ILogger<ParserService> _logger;
         public static readonly ParserCompany Petshop = new() { Id = 1, Name = "Petshop" };
         public static readonly ParserCompany Vetna = new() { Id = 2, Name = "Vetna" };
+
+        private ParserBagiraService? bagiraService;
+        private ParserPagesService? pagesService;
+
+        private ParserBagiraService BagiraService
+        {
+            get
+            {
+                bagiraService ??= new ParserBagiraService(_appContext);
+
+                return bagiraService;
+            }
+        }
+
+        private ParserPagesService PagesService
+        {
+            get
+            {
+                pagesService ??= new ParserPagesService(_appContext);
+
+                return pagesService;
+            }
+        }
 
         public ParserService(ApplicationContext appContext, ILogger<ParserService> logger)
         {
@@ -42,7 +67,7 @@ namespace BagiraServer.Services.Parser
             return _appContext.ParserGoods.AsNoTracking().Where(x => x.ParserCompanyId == parserCompanyId).Select(x => x.Brand).Distinct().ToList();
         }
 
-        public async Task<ParserGoodResponse<List<ParserGood>>> GetParserGoodsAsync(int parserCompanyId, string brand, ParserGoodRequestParam param)
+        public async Task<ParserGoodResponse<ParserGood>> GetParserGoodsAsync(int parserCompanyId, string brand, ParserGoodRequestParam param)
         {
             var parserGoodQuery = _appContext.ParserGoods.AsNoTracking()
                 .Where(x =>
@@ -62,7 +87,7 @@ namespace BagiraServer.Services.Parser
                 .Take(param.Take)
                 .ToListAsync();
 
-            return new ParserGoodResponse<List<ParserGood>>
+            return new ParserGoodResponse<ParserGood>
             {
                 Take = param.Take,
                 Skip = param.Skip,
@@ -85,95 +110,30 @@ namespace BagiraServer.Services.Parser
             return null;
         }
 
-        public List<ParserPage> GetParserPages(int parserCompanyId)
-        {
-            return _appContext.ParserPages.AsNoTracking().Where(x => x.ParserCompanyId == parserCompanyId).ToList();
-        }
+        public async Task<List<ParserPage>> GetParserPagesAsync(int parserCompanyId) =>
+            await PagesService.GetPagesAsync(parserCompanyId);
 
-        public ParserPage AddParserPage(ParserPage parserPage)
-        {
-            var entity = _appContext.Add(parserPage).Entity;
-            _appContext.SaveChanges();
-            return entity;
-        }
+        public ParserPage AddParserPage(ParserPage parserPage) =>
+            PagesService.AddParserPage(parserPage);
 
-        public ParserPage? UpdateParserPage(ParserPage parserPage)
-        {
-            var pageExist = _appContext.ParserPages.AsNoTracking().Any(page => page.Id == parserPage.Id);
-            if (!pageExist) return null;
+        public ParserPage? UpdateParserPage(ParserPage parserPage) =>
+            PagesService.UpdatePage(parserPage);
 
-            var entity = _appContext.Update(parserPage).Entity;
-            _appContext.SaveChanges();
-            return entity;
-        }
+        public bool? UpdatePageIsActive(int pageId, bool isActive) =>
+            PagesService.UpdatePageIsActive(pageId, isActive);
 
-        public bool? UpdatePageIsActive(int pageId, bool isActive)
-        {
-            var page = _appContext.ParserPages.Find(pageId);
-            if (page == null) return null;
+        public ParserPage? DeleteParserPage(int parserPageId) =>
+            PagesService.DeletePage(parserPageId);
 
-            page.IsActive = isActive;
-            _appContext.SaveChanges();
-            return page.IsActive;
-        }
+        public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync() =>
+            await BagiraService.GetGoodNamesAsync();
 
-        public ParserPage? DeleteParserPage(int parserPageId)
-        {
-            var page = _appContext.ParserPages.Find(parserPageId);
-            if (page != null)
-            {
-                var entity = _appContext.Remove(page).Entity;
-                _appContext.SaveChanges();
-                return entity;
-            }
+        public async Task<List<ParserBagiraMenuDTO>> GetBagiraMenuAsync() =>
+            await BagiraService.GetMenuAsync();
 
-            return null;
-        }
+        public async Task<ParserGoodResponse<ParserBagiraGoodDTO>> GetBagiraGoodsAsync(int? parentId, int take, int skip) =>
+            await BagiraService.GetGoodsAsync(parentId, take, skip);
 
-        public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync()
-        {
-            var names = await _appContext.Goods
-                .Where(good => !good.IsGroup)
-                .Select(good => new BagiraGoodNameDTO { Id = good.Id, Name = good.Name })
-                .ToListAsync();
-
-            return names;
-        }
-
-        public async Task<List<ParserBagiraMenuDTO>> GetBagiraMenuAsync()
-        {
-            var groups = await _appContext.Goods
-                .Where(group =>
-                    group.IsGroup
-                    && _appContext.Goods.Any
-                        (g => !g.IsGroup
-                            && g.Path.Contains("/" + group.Id + "/")
-                            && _appContext.ParserGoods.Any(parserGood => parserGood.GoodId == g.Id)
-                        )
-                    )
-                .ToListAsync();
-
-            var menu = MakeMenu(groups, null);
-
-            return menu;
-        }
-
-        private List<ParserBagiraMenuDTO> MakeMenu(List<Good> groups, int? parentId)
-        {
-            var menu = groups.Where(gr => gr.ParentId == parentId)
-                .Select(group => new ParserBagiraMenuDTO { Id = group.Id, Name = group.Name, Path = group.Path })
-                .ToList();
-
-            foreach (var item in menu)
-            {
-                if (groups.Any(gr => gr.ParentId == item.Id))
-                {
-                    item.Children = MakeMenu(groups, item.Id);
-                }
-            }
-
-            return menu;
-        }
 
         private async Task ParseAsync(IParser parser)
         {

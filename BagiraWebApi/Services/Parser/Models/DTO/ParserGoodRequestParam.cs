@@ -1,4 +1,4 @@
-﻿namespace BagiraWebApi.Services.Parser.DTO
+﻿namespace BagiraWebApi.Services.Parser.Models.DTO
 {
     public class ParserGoodRequestParam
     {

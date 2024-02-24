@@ -1,6 +1,6 @@
 ﻿using BagiraWebApi.Models.Parser;
 
-namespace BagiraServer.Services.Parser
+namespace BagiraWebApi.Services.Parser.Parsers
 {
     public interface IParser
     {
