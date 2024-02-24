@@ -32,5 +32,14 @@ namespace BagiraWebApi.Controllers.api.Parser.v1
 
             return Ok(menu);
         }
+
+        [OutputCache]
+        [HttpGet("goods")]
+        public async Task<IActionResult> GetGoods(string parentId, int take = 20, int skip = 0)
+        {
+            var goods = await _parserService.GetBagiraGoodsAsync(parentId, take, skip);
+
+            return Ok();
+        }
     }
 }

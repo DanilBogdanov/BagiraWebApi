@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 
-namespace BagiraWebApi.Services.Parser.DTO
+namespace BagiraWebApi.Services.Parser.Models.DTO
 {
     public class ParserGoodResponse<T>
     {
