@@ -5,6 +5,7 @@ using BagiraWebApi.Models.Parser;
 using BagiraWebApi.Services.Parser.Models;
 using BagiraWebApi.Services.Parser.Models.DTO;
 using BagiraWebApi.Services.Parser.Parsers;
+using BagiraWebApi.Services.Parser.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace BagiraServer.Services.Parser
@@ -15,6 +16,17 @@ namespace BagiraServer.Services.Parser
         private readonly ILogger<ParserService> _logger;
         public static readonly ParserCompany Petshop = new() { Id = 1, Name = "Petshop" };
         public static readonly ParserCompany Vetna = new() { Id = 2, Name = "Vetna" };
+        
+        private ParserBagiraService? bagiraService;
+        private ParserBagiraService BagiraService
+        {
+            get
+            {
+                bagiraService ??= new ParserBagiraService(_appContext);
+
+                return bagiraService;
+            }
+        }
 
         public ParserService(ApplicationContext appContext, ILogger<ParserService> logger)
         {
@@ -131,50 +143,10 @@ namespace BagiraServer.Services.Parser
             return null;
         }
 
-        public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync()
-        {
-            var names = await _appContext.Goods
-                .Where(good => !good.IsGroup)
-                .Select(good => new BagiraGoodNameDTO { Id = good.Id, Name = good.Name })
-                .ToListAsync();
+        public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync() => await BagiraService.GetGoodNamesAsync();
 
-            return names;
-        }
+        public async Task<List<ParserBagiraMenuDTO>> GetBagiraMenuAsync() => await BagiraService.GetMenuAsync();
 
-        public async Task<List<ParserBagiraMenuDTO>> GetBagiraMenuAsync()
-        {
-            var groups = await _appContext.Goods
-                .Where(group =>
-                    group.IsGroup
-                    && _appContext.Goods.Any
-                        (g => !g.IsGroup
-                            && g.Path.Contains("/" + group.Id + "/")
-                            && _appContext.ParserGoods.Any(parserGood => parserGood.GoodId == g.Id)
-                        )
-                    )
-                .ToListAsync();
-
-            var menu = MakeMenu(groups, null);
-
-            return menu;
-        }
-
-        private List<ParserBagiraMenuDTO> MakeMenu(List<Good> groups, int? parentId)
-        {
-            var menu = groups.Where(gr => gr.ParentId == parentId)
-                .Select(group => new ParserBagiraMenuDTO { Id = group.Id, Name = group.Name, Path = group.Path })
-                .ToList();
-
-            foreach (var item in menu)
-            {
-                if (groups.Any(gr => gr.ParentId == item.Id))
-                {
-                    item.Children = MakeMenu(groups, item.Id);
-                }
-            }
-
-            return menu;
-        }
 
         private async Task ParseAsync(IParser parser)
         {
