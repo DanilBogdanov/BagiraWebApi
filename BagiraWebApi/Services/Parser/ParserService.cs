@@ -16,8 +16,10 @@ namespace BagiraServer.Services.Parser
         private readonly ILogger<ParserService> _logger;
         public static readonly ParserCompany Petshop = new() { Id = 1, Name = "Petshop" };
         public static readonly ParserCompany Vetna = new() { Id = 2, Name = "Vetna" };
-        
+
         private ParserBagiraService? bagiraService;
+        private ParserPagesService? pagesService;
+
         private ParserBagiraService BagiraService
         {
             get
@@ -25,6 +27,16 @@ namespace BagiraServer.Services.Parser
                 bagiraService ??= new ParserBagiraService(_appContext);
 
                 return bagiraService;
+            }
+        }
+
+        private ParserPagesService PagesService
+        {
+            get
+            {
+                pagesService ??= new ParserPagesService(_appContext);
+
+                return pagesService;
             }
         }
 
@@ -98,50 +110,20 @@ namespace BagiraServer.Services.Parser
             return null;
         }
 
-        public List<ParserPage> GetParserPages(int parserCompanyId)
-        {
-            return _appContext.ParserPages.AsNoTracking().Where(x => x.ParserCompanyId == parserCompanyId).ToList();
-        }
-
+        public async Task<List<ParserPage>> GetParserPagesAsync(int parserCompanyId) 
+            => await PagesService.GetPagesAsync(parserCompanyId);
+        
         public ParserPage AddParserPage(ParserPage parserPage)
-        {
-            var entity = _appContext.Add(parserPage).Entity;
-            _appContext.SaveChanges();
-            return entity;
-        }
+            => PagesService.AddParserPage(parserPage);
 
         public ParserPage? UpdateParserPage(ParserPage parserPage)
-        {
-            var pageExist = _appContext.ParserPages.AsNoTracking().Any(page => page.Id == parserPage.Id);
-            if (!pageExist) return null;
-
-            var entity = _appContext.Update(parserPage).Entity;
-            _appContext.SaveChanges();
-            return entity;
-        }
+            => PagesService.UpdatePage(parserPage);
 
         public bool? UpdatePageIsActive(int pageId, bool isActive)
-        {
-            var page = _appContext.ParserPages.Find(pageId);
-            if (page == null) return null;
-
-            page.IsActive = isActive;
-            _appContext.SaveChanges();
-            return page.IsActive;
-        }
+            => PagesService.UpdatePageIsActive(pageId, isActive);
 
         public ParserPage? DeleteParserPage(int parserPageId)
-        {
-            var page = _appContext.ParserPages.Find(parserPageId);
-            if (page != null)
-            {
-                var entity = _appContext.Remove(page).Entity;
-                _appContext.SaveChanges();
-                return entity;
-            }
-
-            return null;
-        }
+            => PagesService.DeletePage(parserPageId);
 
         public async Task<List<BagiraGoodNameDTO>> GetBagiraGoodNamesAsync() => await BagiraService.GetGoodNamesAsync();
 
