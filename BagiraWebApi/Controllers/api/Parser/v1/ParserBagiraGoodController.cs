@@ -15,7 +15,7 @@ namespace BagiraWebApi.Controllers.api.Parser.v1
             _parserService = parserService;
         }
 
-        [OutputCache]
+        [OutputCache(PolicyName = "GoodsTag")]
         [HttpGet("goods/names")]
         public async Task<IActionResult> GetBagiraGoodNamesAsync()
         {
@@ -24,7 +24,6 @@ namespace BagiraWebApi.Controllers.api.Parser.v1
             return Ok(names);
         }
 
-        [OutputCache]
         [HttpGet("menu")]
         public async Task<IActionResult> GetBagiraMenuAsync()
         {
@@ -33,7 +32,6 @@ namespace BagiraWebApi.Controllers.api.Parser.v1
             return Ok(menu);
         }
 
-        [OutputCache]
         [HttpGet("goods")]
         public async Task<IActionResult> GetGoods(int? parentId, int take = 20, int skip = 0)
         {

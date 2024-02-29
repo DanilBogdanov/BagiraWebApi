@@ -31,7 +31,7 @@ builder.Services.AddHostedService<Worker>();
 builder.Services.AddCors();
 builder.Services.AddOutputCache(oc =>
 {
-    oc.DefaultExpirationTimeSpan = TimeSpan.FromDays(1);
+    oc.DefaultExpirationTimeSpan = TimeSpan.FromHours(1);
     oc.AddPolicy("GoodsMenuTag", pb => pb.Tag("GoodsMenu"));
     oc.AddPolicy("GoodsTag", pb => pb.Tag("Goods"));
 });

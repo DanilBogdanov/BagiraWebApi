@@ -1,6 +1,7 @@
 ﻿using BagiraServer.Services.Parser;
 using BagiraWebApi.Services.Parser.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace BagiraWebApi.Controllers.api.Parser.v1
 {

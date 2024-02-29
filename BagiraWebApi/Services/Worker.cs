@@ -23,7 +23,7 @@ namespace BagiraWebApi.Services
 
             // await Task.WhenAll(updateGoodTask, updateParserGoodsTask);
 
-            /*while (!stoppingToken.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
@@ -52,7 +52,7 @@ namespace BagiraWebApi.Services
                 }
 
                 await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
-            }*/
+            }
         }
 
         private async Task UpdateGoods(CancellationToken stoppingToken)
