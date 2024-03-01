@@ -135,7 +135,7 @@ namespace BagiraWebApi.Services.Parser.Parsers
         {
             var imgUrl = item.QuerySelector(ITEM_IMG_SELECTOR)?.GetAttribute("data-src");
             
-            if (imgUrl != null)
+            if (imgUrl != null && imgUrl != "")
             {
                 return $"https://vetna.info{imgUrl}";
             }
