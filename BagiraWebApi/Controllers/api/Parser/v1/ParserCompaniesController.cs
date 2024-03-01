@@ -1,5 +1,4 @@
 ﻿using BagiraServer.Services.Parser;
-using BagiraWebApi.Models.Parser;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BagiraWebApi.Controllers.api.Parser.v1
