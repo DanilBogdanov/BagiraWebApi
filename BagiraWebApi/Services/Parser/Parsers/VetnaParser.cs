@@ -17,6 +17,7 @@ namespace BagiraWebApi.Services.Parser.Parsers
         private const string ITEM_CURRENT_PRICE_SELECTOR = ".catalogue-item-card1-price > div:first-child > div";
         private const string ITEM_SALE_PRICE_SELECTOR = "[class^=\"action-precent-sum\"]";
         private const string ITEM_IMG_SELECTOR = ".catalogue-item-card1-foto";
+        private const string ITEM_BRAND_SELECTOR = "[class^=\"commerc_brand\"]";
 
         public int ParserCompanyId { get; }
 
@@ -83,7 +84,7 @@ namespace BagiraWebApi.Services.Parser.Parsers
         {
             var id = GetId(item);
             var name = GetName(item);
-            var brand = GetBrandFromName(name);
+            var brand = GetBrand(item, name);
             var imgUrl = GetImgUrl(item);
             var price = GetPrice(item);
 
@@ -126,15 +127,32 @@ namespace BagiraWebApi.Services.Parser.Parsers
             return name;
         }
 
-        private static string GetBrandFromName(string name)
+        private static string GetBrand(IElement item, string name)
         {
-            return name.Split(" ")[0];
+            var brand = item.QuerySelector(ITEM_BRAND_SELECTOR)?.GetAttribute("value");
+
+            if (brand == null || brand == "")
+            {
+                name = name.Trim();
+                int closeBracketIdx = name.IndexOf(")");
+
+                if (closeBracketIdx == -1 || closeBracketIdx > 40)
+                {
+                    brand = name.Split(" ")[0];
+                }
+                else
+                {
+                    brand = name[..(closeBracketIdx + 1)];
+                }                
+            }
+
+            return brand;
         }
 
         private static string? GetImgUrl(IElement item)
         {
             var imgUrl = item.QuerySelector(ITEM_IMG_SELECTOR)?.GetAttribute("data-src");
-            
+
             if (imgUrl != null && imgUrl != "")
             {
                 return $"https://vetna.info{imgUrl}";
