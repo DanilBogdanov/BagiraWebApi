@@ -16,9 +16,9 @@ namespace BagiraWebApi.Controllers.api.Parser.v1
         }
 
         [HttpGet("companies/{parserCompanyId}/pages")]
-        public IActionResult Get(int parserCompanyId)
+        public async Task<IActionResult> GetAsync(int parserCompanyId)
         {
-            var pages = _parserService.GetParserPages(parserCompanyId);
+            var pages = await _parserService.GetParserPagesAsync(parserCompanyId);
             return Ok(pages);
         }
 

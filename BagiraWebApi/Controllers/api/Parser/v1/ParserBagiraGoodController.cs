@@ -15,13 +15,29 @@ namespace BagiraWebApi.Controllers.api.Parser.v1
             _parserService = parserService;
         }
 
-        [OutputCache]
+        [OutputCache(PolicyName = "GoodsTag")]
         [HttpGet("goods/names")]
         public async Task<IActionResult> GetBagiraGoodNamesAsync()
         {
             var names = await _parserService.GetBagiraGoodNamesAsync();
 
             return Ok(names);
+        }
+
+        [HttpGet("menu")]
+        public async Task<IActionResult> GetBagiraMenuAsync()
+        {
+            var menu = await _parserService.GetBagiraMenuAsync();
+
+            return Ok(menu);
+        }
+
+        [HttpGet("goods")]
+        public async Task<IActionResult> GetGoods(int? parentId, int take = 20, int skip = 0)
+        {
+            var goods = await _parserService.GetBagiraGoodsAsync(parentId, take, skip);
+
+            return Ok(goods);
         }
     }
 }

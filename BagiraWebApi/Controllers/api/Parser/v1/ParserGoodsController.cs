@@ -1,5 +1,5 @@
 ﻿using BagiraServer.Services.Parser;
-using BagiraWebApi.Services.Parser.DTO;
+using BagiraWebApi.Services.Parser.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BagiraWebApi.Controllers.api.Parser.v1

@@ -2,7 +2,7 @@
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 
-namespace BagiraServer.Services.Parser
+namespace BagiraWebApi.Services.Parser.Parsers
 {
     public class PetshopParser : IParser
     {
@@ -77,7 +77,7 @@ namespace BagiraServer.Services.Parser
                         LastUpdated = DateTime.UtcNow.AddHours(5),
                         Brand = product.Brand,
                         Name = product.Title,
-                        Weight = (offer.Weight / 1000.0) + "кг",
+                        Weight = offer.Weight / 1000.0 + "кг",
                         ImgUrl = product.Photo?.Src
                     };
 
@@ -122,15 +122,15 @@ namespace BagiraServer.Services.Parser
 
         private class Product
         {
-            public string Title { get; set; } = String.Empty;
-            public string Brand { get; set; } = String.Empty;
+            public string Title { get; set; } = string.Empty;
+            public string Brand { get; set; } = string.Empty;
             public Photo? Photo { get; set; }
             public List<Offer> Offers { get; set; } = new List<Offer>();
         }
 
         private class Photo
         {
-            public string Src { get; set; } = String.Empty;
+            public string Src { get; set; } = string.Empty;
         }
 
         private class Offer

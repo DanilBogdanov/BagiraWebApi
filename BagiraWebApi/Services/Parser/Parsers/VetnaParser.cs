@@ -1,10 +1,9 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
-using BagiraServer.Services.Parser;
 using BagiraWebApi.Models.Parser;
 using IConfiguration = AngleSharp.IConfiguration;
 
-namespace BagiraWebApi.Services.Parser
+namespace BagiraWebApi.Services.Parser.Parsers
 {
     public class VetnaParser : IParser
     {
@@ -17,6 +16,8 @@ namespace BagiraWebApi.Services.Parser
         private const string ITEM_NAME_SELECTOR = ".catalogue-item-card1-name";
         private const string ITEM_CURRENT_PRICE_SELECTOR = ".catalogue-item-card1-price > div:first-child > div";
         private const string ITEM_SALE_PRICE_SELECTOR = "[class^=\"action-precent-sum\"]";
+        private const string ITEM_IMG_SELECTOR = ".catalogue-item-card1-foto";
+        private const string ITEM_BRAND_SELECTOR = "[class^=\"commerc_brand\"]";
 
         public int ParserCompanyId { get; }
 
@@ -83,7 +84,8 @@ namespace BagiraWebApi.Services.Parser
         {
             var id = GetId(item);
             var name = GetName(item);
-            var brand = GetBrandFromName(name);
+            var brand = GetBrand(item, name);
+            var imgUrl = GetImgUrl(item);
             var price = GetPrice(item);
 
             return new ParserGood
@@ -92,13 +94,14 @@ namespace BagiraWebApi.Services.Parser
                 ParserCompanyId = ParserCompanyId,
                 Name = name,
                 Brand = brand,
+                ImgUrl = imgUrl,
                 LastUpdated = DateTime.UtcNow.AddHours(5),
                 Price = price.price,
                 SalePrice = price.salePrice,
             };
         }
 
-        private int GetId(IElement item)
+        private static int GetId(IElement item)
         {
             string idValue = item.QuerySelector(ITEM_ID_SELECTOR)?.Text()
                 ?? throw new Exception($"VetnaParser: Can't get id by selector: {ITEM_ID_SELECTOR}");
@@ -116,7 +119,7 @@ namespace BagiraWebApi.Services.Parser
             }
         }
 
-        private string GetName(IElement item)
+        private static string GetName(IElement item)
         {
             string name = item.QuerySelector(ITEM_NAME_SELECTOR)?.Text()
                 ?? throw new Exception($"VetnaParser: Can't get name by selector: {ITEM_NAME_SELECTOR}");
@@ -124,12 +127,41 @@ namespace BagiraWebApi.Services.Parser
             return name;
         }
 
-        private string GetBrandFromName(string name)
+        private static string GetBrand(IElement item, string name)
         {
-            return name.Split(" ")[0];
+            var brand = item.QuerySelector(ITEM_BRAND_SELECTOR)?.GetAttribute("value");
+
+            if (brand == null || brand == "")
+            {
+                name = name.Trim();
+                int closeBracketIdx = name.IndexOf(")");
+
+                if (closeBracketIdx == -1 || closeBracketIdx > 40)
+                {
+                    brand = name.Split(" ")[0];
+                }
+                else
+                {
+                    brand = name[..(closeBracketIdx + 1)];
+                }                
+            }
+
+            return brand;
         }
 
-        private (float price, float salePrice) GetPrice(IElement item)
+        private static string? GetImgUrl(IElement item)
+        {
+            var imgUrl = item.QuerySelector(ITEM_IMG_SELECTOR)?.GetAttribute("data-src");
+
+            if (imgUrl != null && imgUrl != "")
+            {
+                return $"https://vetna.info{imgUrl}";
+            }
+
+            return null;
+        }
+
+        private static (float price, float salePrice) GetPrice(IElement item)
         {
             var currentPrice = item.QuerySelector(ITEM_CURRENT_PRICE_SELECTOR)?.Text()
                 ?? throw new Exception($"VetnaParser: Can't get current price by selector: {ITEM_CURRENT_PRICE_SELECTOR}");
@@ -139,8 +171,8 @@ namespace BagiraWebApi.Services.Parser
                 .Trim();
             var oldPrice = item.QuerySelector(ITEM_SALE_PRICE_SELECTOR)?.Text();
 
-            float price = 0;
             float salePrice = 0;
+            float price;
 
             if (oldPrice != null)
             {
@@ -159,7 +191,7 @@ namespace BagiraWebApi.Services.Parser
             return (price, salePrice);
         }
 
-        private int? GetLastPageNumber(IDocument document)
+        private static int? GetLastPageNumber(IDocument document)
         {
             var endPaginationLink = document.QuerySelector(".catalogue-pagination-prev-next a")
                 ?.GetAttribute("href");

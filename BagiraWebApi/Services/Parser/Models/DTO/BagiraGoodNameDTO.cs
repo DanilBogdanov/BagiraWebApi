@@ -1,6 +1,6 @@
-﻿namespace BagiraWebApi.Services.Parser
+﻿namespace BagiraWebApi.Services.Parser.Models.DTO
 {
-    public class ParserCompany
+    public class BagiraGoodNameDTO
     {
         public int Id { get; set; }
         public required string Name { get; set; }
