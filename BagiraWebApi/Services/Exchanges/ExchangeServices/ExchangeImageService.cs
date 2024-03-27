@@ -1,4 +1,5 @@
 ﻿using BagiraWebApi.Services.Exchanges.DataModels;
+using Microsoft.EntityFrameworkCore;
 using PhotoSauce.MagicScaler;
 using System.Diagnostics;
 
@@ -7,13 +8,16 @@ namespace BagiraWebApi.Services.Exchanges.ExchangeServices
     public class ExchangeImageService
     {
         const string IMG_ROOT_DIRECTORY = "wwwroot/bagira/img";
+        const string IMAGE_EXT = ".jpg";
         private readonly string IMG_400_DIRECTORY = Path.Combine(IMG_ROOT_DIRECTORY, "400");
         private readonly string IMG_800_DIRECTORY = Path.Combine(IMG_ROOT_DIRECTORY, "800");
+        private readonly ApplicationContext _context;
         private readonly Soap1C _soap1C;
         private readonly ILogger<Exchange1C> _logger;
 
-        public ExchangeImageService(Soap1C soap1C, ILogger<Exchange1C> logger)
+        public ExchangeImageService(ApplicationContext context, Soap1C soap1C, ILogger<Exchange1C> logger)
         {
+            _context = context;
             _soap1C = soap1C;
             _logger = logger;
 
@@ -37,6 +41,50 @@ namespace BagiraWebApi.Services.Exchanges.ExchangeServices
                 DeletedCount = deletedCount,
                 ElapsedSec = stopwatch.Elapsed.TotalSeconds
             };
+        }
+
+        public async Task<ExchangeResult> CheckImagesAsync()
+        {
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var goodIdsWithImage = await _context.Goods
+                .AsNoTracking()
+                .Where(good => good.ImgDataVersion != null)
+                .Select(good => good.Id)
+                .ToListAsync();
+
+            var imagesIds400 = GetImgIdsFromDirectory(IMG_400_DIRECTORY);
+            var imagesIds800 = GetImgIdsFromDirectory(IMG_800_DIRECTORY);
+
+            var missingImgIds400 = goodIdsWithImage.Except(imagesIds400);
+            var missingImgIds800 = goodIdsWithImage.Except(imagesIds800);
+            var imgIdsToUpdate = missingImgIds400.Union(missingImgIds800).ToList();
+
+            var unusedImgIds400 = imagesIds400.Except(goodIdsWithImage);
+            var unusedImgIds800 = imagesIds800.Except(goodIdsWithImage);
+            var imgIdsToDelete = unusedImgIds400.Union(unusedImgIds800).ToList();
+
+            var countAddedImg = await UpdateImagesAsync(imgIdsToUpdate);
+            var countDeletedImg = DeleteImages(imgIdsToDelete);
+
+            stopwatch.Stop();
+
+            return new ExchangeResult
+            {
+                CreatedCount = countAddedImg,
+                DeletedCount = countDeletedImg,
+                ElapsedSec = stopwatch.Elapsed.TotalSeconds
+            };
+        }
+
+        private List<int> GetImgIdsFromDirectory(string path)
+        {
+            return new DirectoryInfo(path)
+                .GetFiles()
+                .Select(path => int.Parse(path.Name[..^IMAGE_EXT.Length]))
+                .ToList();
         }
 
         private async Task<int> UpdateImagesAsync(List<int> goodIds)
@@ -116,7 +164,7 @@ namespace BagiraWebApi.Services.Exchanges.ExchangeServices
 
         private List<ImageInfo> GetFilePaths(int goodId)
         {
-            string fileName = $"{goodId}.jpg";
+            string fileName = $"{goodId}{IMAGE_EXT}";
 
             string path400 = Path.Combine(IMG_400_DIRECTORY, fileName);
             var imgInfo400 = new ImageInfo { FilePath = path400, Size = 400 };

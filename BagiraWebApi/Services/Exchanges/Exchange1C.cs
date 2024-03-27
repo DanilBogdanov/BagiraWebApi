@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace BagiraWebApi.Services.Exchanges
 {
     public class Exchange1C
-    {        
+    {
         private readonly ILogger<Exchange1C> _logger;
         private readonly ApplicationContext _context;
         private readonly IOutputCacheStore _cache;
@@ -33,10 +33,10 @@ namespace BagiraWebApi.Services.Exchanges
             _exchangeRestService = new ExchangeRestService(context, soap1C);
             _exchangePriceService = new ExchangePriceService(context, soap1C);
             _exchangePropertyValuesService = new ExchangePropertyValuesService(context, soap1C);
-            _exchangeImageService = new ExchangeImageService(soap1C, logger);
+            _exchangeImageService = new ExchangeImageService(context, soap1C, logger);
         }
 
-        public async Task Update()
+        public async Task UpdateAsync()
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -56,8 +56,8 @@ namespace BagiraWebApi.Services.Exchanges
                 await _context.SaveChangesAsync();
             }
 
-            if (updateGoodsResult.WasChanged || updatePricesResult.WasChanged 
-                || updateRestsResult.WasChanged ||updatePropertyValuesResult.WasChanged)
+            if (updateGoodsResult.WasChanged || updatePricesResult.WasChanged
+                || updateRestsResult.WasChanged || updatePropertyValuesResult.WasChanged)
             {
                 await _cache.EvictByTagAsync("GoodsMenu", new CancellationToken());
                 await _cache.EvictByTagAsync("Goods", new CancellationToken());
@@ -74,6 +74,23 @@ namespace BagiraWebApi.Services.Exchanges
                 + $"\nProperty:   {updatePropertyValuesResult}"
                 + $"\nImages:     {updateImagesResult}"
                 );
+        }
+
+        public async Task CheckImagesAsync()
+        {
+            try
+            {
+                _logger.LogInformation(">>>>>>>>>>>>>> Check Images: Start");
+                var updateImagesResult = await _exchangeImageService.CheckImagesAsync();
+                _logger.LogInformation($">>>>>>>>>>>>>> Check Images: Done in {updateImagesResult.ElapsedSec}sec"
+                + $"\nAdd images:      {updateImagesResult.CreatedCount}"
+                + $"\nDeleted images:  {updateImagesResult.DeletedCount}"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Cannot check images. Exception: {Ex}", ex);
+            }
         }
     }
 }
