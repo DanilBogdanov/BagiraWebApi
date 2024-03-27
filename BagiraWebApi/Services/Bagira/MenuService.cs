@@ -63,7 +63,7 @@ namespace BagiraWebApi.Services.Bagira
                     g => g.IsGroup
                     && _context.Goods.Any(
                         good => good.Path.Contains("/" + g.Id + "/")
-                        && good.ImgUrl != null
+                        && good.ImgDataVersion != null
                         && (valueIds == null || _context.GoodPropertyValues.Any(
                             gpv => gpv.GoodId == good.Id
                             && gpv.PropertyId == animalPropertyId

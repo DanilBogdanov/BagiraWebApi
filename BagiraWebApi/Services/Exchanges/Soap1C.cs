@@ -69,7 +69,6 @@ namespace BagiraWebApi.Services.Exchanges
                 FullName = good.FullName,
                 Description = good.Description,
                 ImgDataVersion = good.ImgDataVersion,
-                ImgExt = good.ImgExt
             }).ToList();
             return goods;
         }

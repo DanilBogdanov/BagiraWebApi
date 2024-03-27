@@ -36,4 +36,6 @@
     <None Include="wwwroot\assets\index-4d87b717.js" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
+
 </Project>
