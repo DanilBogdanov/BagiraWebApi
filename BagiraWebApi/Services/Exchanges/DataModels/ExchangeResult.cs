@@ -2,7 +2,6 @@
 {
     public class ExchangeResult
     {
-        public bool HasChangedParent { get; set; }
         public double ElapsedSec { get; set; }
         public int CreatedCount { get; set; }
         public int UpdatedCount { get; set; }

@@ -143,7 +143,7 @@ namespace BagiraWebApi.Services.Parser.Parsers
                 else
                 {
                     brand = name[..(closeBracketIdx + 1)];
-                }                
+                }
             }
 
             return brand;

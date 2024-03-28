@@ -30,8 +30,21 @@ namespace BagiraWebApi.Services
                     _logger.LogInformation($"Start Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
                     using var scope = _serviceProvider.CreateScope();
                     var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
-                    await exchange1C.Update();
+                    await exchange1C.UpdateAsync();
                     _logger.LogInformation($"Stop Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.ToString());
+                }
+
+                try
+                {
+                    _logger.LogInformation($"Start Worker - Check Images: {DateTime.UtcNow.AddHours(5)} =====================");
+                    using var scope = _serviceProvider.CreateScope();
+                    var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
+                    await exchange1C.CheckImagesAsync();
+                    _logger.LogInformation($"Stop Worker - Check Images: {DateTime.UtcNow.AddHours(5)} =====================");
                 }
                 catch (Exception ex)
                 {
@@ -65,7 +78,7 @@ namespace BagiraWebApi.Services
                     _logger.LogInformation($"Start Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
                     using var scope = _serviceProvider.CreateScope();
                     var exchange1C = scope.ServiceProvider.GetRequiredService<Exchange1C>();
-                    await exchange1C.Update();
+                    await exchange1C.UpdateAsync();
                     _logger.LogInformation($"Stop Worker - Update Goods: {DateTime.UtcNow.AddHours(5)} =====================");
                 }
                 catch (Exception ex)

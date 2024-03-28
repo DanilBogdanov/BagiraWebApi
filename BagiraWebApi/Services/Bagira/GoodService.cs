@@ -7,6 +7,8 @@ namespace BagiraWebApi.Services.Bagira
 {
     public class GoodService
     {
+        const string IMG_400_DIRECTORY = "/bagira/img/400";
+        const string IMG_800_DIRECTORY = "/bagira/img/800";
         private readonly ApplicationContext _context;
         private readonly IConfiguration _configuration;
 
@@ -46,12 +48,16 @@ namespace BagiraWebApi.Services.Bagira
             var price = await _context.GoodPrices
                 .FirstOrDefaultAsync(pr => pr.PriceTypeId == priceTypeId && pr.GoodId == id);
 
+            string? imgUrl = good.ImgDataVersion != null 
+                ? Path.Combine(IMG_800_DIRECTORY, $"{id}.jpg") 
+                : null;
+
             return new GoodDTO
             {
                 Id = good.Id,
                 Name = good.FullName,
                 Description = good.Description,
-                ImgUrl = good.ImgUrl,
+                ImgUrl = imgUrl,
                 Price = price?.Price
             };
         }
@@ -119,7 +125,7 @@ namespace BagiraWebApi.Services.Bagira
                     (query == null || good.KeyWords == null || EF.Functions.Contains(good.KeyWords, query))
                     && (queryProps.GroupId == null || good.Path.Contains($"/{queryProps.GroupId}/"))
                     && !good.IsGroup
-                    && good.ImgUrl != null
+                    && good.ImgDataVersion != null
                     && _context.GoodRests
                         .Any(goodRest => goodRest.GoodId == good.Id && goodRest.StorageId == storageId)
                     && (queryProps.PropertyValuesIds == null || _context.GoodPropertyValues
@@ -135,7 +141,7 @@ namespace BagiraWebApi.Services.Bagira
                     {
                         Id = good.Id,
                         Name = good.FullName,
-                        ImgUrl = good.ImgUrl,
+                        ImgUrl = good.ImgDataVersion != null ? Path.Combine(IMG_400_DIRECTORY, $"{good.Id}.jpg"): null,
                         Price = goodPrice.Price
                     });
             var goodsCount = await goodsQuery.CountAsync();
