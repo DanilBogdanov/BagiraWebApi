@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
 builder.Services.AddOptions<AuthConfig>().BindConfiguration("Auth").ValidateDataAnnotations().ValidateOnStart();
+builder.Services.AddOptions<BagiraConfig>().BindConfiguration("Bagira").ValidateDataAnnotations().ValidateOnStart();
 
 // Add services to the container.
 builder.Services.AddControllers();
