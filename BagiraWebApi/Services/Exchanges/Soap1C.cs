@@ -15,11 +15,11 @@ namespace BagiraWebApi.Services.Exchanges
         private const string SERVICES_NAME = "bagira_app";
         private readonly string _soapServiceUrl;
 
-        public Soap1C(IConfiguration configuration)
+        public Soap1C(Connection1CConfig connection1CConfig)
         {
-            string host = configuration["1c:Connection:Host"];
-            string login = configuration["1c:Connection:Login"];
-            string password = configuration["1c:Connection:Password"];
+            string host = connection1CConfig.Host;
+            string login = connection1CConfig.Login;
+            string password = connection1CConfig.Password;
             _soapServiceUrl = $"http://{host}/{SERVICES_FOLDER}/ws/{SERVICES_NAME}.1cws";
 
             HttpClientHandler httpHandler = new()
@@ -27,7 +27,6 @@ namespace BagiraWebApi.Services.Exchanges
                 Credentials = new NetworkCredential(login, password)
             };
             _httpClient = new HttpClient(httpHandler);
-            //_httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
         }
 
         public async Task<IEnumerable<GoodStorage>> GetGoodStorages()
