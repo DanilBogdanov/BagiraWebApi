@@ -1,6 +1,8 @@
-﻿using BagiraWebApi.Models.Bagira.DTO;
+﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Models.Bagira.DTO;
 using BagiraWebApi.Services.Bagira.DataModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text.RegularExpressions;
 
 namespace BagiraWebApi.Services.Bagira
@@ -10,18 +12,44 @@ namespace BagiraWebApi.Services.Bagira
         const string IMG_400_DIRECTORY = "/bagira/img/400";
         const string IMG_800_DIRECTORY = "/bagira/img/800";
         private readonly ApplicationContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly BagiraConfig _bagiraConfig;
 
-        public GoodService(IConfiguration configuration, ApplicationContext context)
+        public GoodService(ApplicationContext context, IOptions<BagiraConfig> options)
         {
             _context = context;
-            _configuration = configuration;
+            _bagiraConfig = options.Value;
         }
 
         public async Task<GoodsDTO> SearchAsync(BagiraQueryProps queryProps)
         {
             var goods = await GetGoodsAsync(queryProps);
             return goods;
+        }
+
+        public async Task<List<GoodDTO>> GetGoodsByIds(List<int> ids)
+        {
+            GoodPrice defaultPrice = new() { Price = 0 };
+            GoodRest defaultRest = new () { Rest = 0 };
+
+            var goods = _context.Goods.Where(g =>
+                    !g.IsGroup
+                    && ids.Contains(g.Id))
+                .Select(good => new GoodDTO
+                {
+                    Id = good.Id,
+                    Name = good.FullName,
+                    Price = (_context.GoodPrices
+                        .FirstOrDefault(gp =>
+                            gp.PriceTypeId == _bagiraConfig.DefaultPriceType
+                            && gp.GoodId == good.Id) ?? defaultPrice).Price,
+                    Rest = (_context.GoodRests
+                        .FirstOrDefault(gr =>
+                            gr.StorageId == _bagiraConfig.DefaultStorage
+                            && gr.GoodId == good.Id) ?? defaultRest).Rest,
+                    ImgUrl = good.ImgDataVersion != null ? Path.Combine(IMG_400_DIRECTORY, $"{good.Id}.jpg") : null,
+                });
+
+            return await goods.ToListAsync();
         }
 
         public async Task<List<GoodGroupDTO>> GetGoodGroupsAsync()
@@ -41,15 +69,13 @@ namespace BagiraWebApi.Services.Bagira
                 return null;
             }
 
-            var priceTypeConfigPath = "1c:DefaultPriceType";
-            var priceTypeConfigValue = _configuration[priceTypeConfigPath]
-                ?? throw new Exception($"Not found configuration: {priceTypeConfigPath}");
-            var priceTypeId = int.Parse(priceTypeConfigValue);
             var price = await _context.GoodPrices
-                .FirstOrDefaultAsync(pr => pr.PriceTypeId == priceTypeId && pr.GoodId == id);
+                .FirstOrDefaultAsync(pr =>
+                    pr.PriceTypeId == _bagiraConfig.DefaultPriceType
+                    && pr.GoodId == id);
 
-            string? imgUrl = good.ImgDataVersion != null 
-                ? Path.Combine(IMG_800_DIRECTORY, $"{id}.jpg") 
+            string? imgUrl = good.ImgDataVersion != null
+                ? Path.Combine(IMG_800_DIRECTORY, $"{id}.jpg")
                 : null;
 
             return new GoodDTO
@@ -64,33 +90,21 @@ namespace BagiraWebApi.Services.Bagira
 
         public async Task<GoodsDTO> GetCatGoodsAsync(BagiraQueryProps queryProps)
         {
-            var configPath = "1c:Properties:ValueIds:ForCats";
-            var configValue = _configuration[configPath]
-                ?? throw new Exception($"Not found configuration: {configPath}");
-            var catValueIds = configValue.Split(",");
-            queryProps.PropertyValuesIds = catValueIds;
+            queryProps.PropertyValuesIds = _bagiraConfig.Properties.ValueIds.ForCats;
             var goods = await GetGoodsAsync(queryProps);
             return goods;
         }
 
         public async Task<GoodsDTO> GetDogGoodsAsync(BagiraQueryProps queryProps)
         {
-            var configPath = "1c:Properties:ValueIds:ForDogs";
-            var configValue = _configuration[configPath]
-                ?? throw new Exception($"Not found configuration: {configPath}");
-            var dogValueIds = configValue.Split(",");
-            queryProps.PropertyValuesIds = dogValueIds;
+            queryProps.PropertyValuesIds = _bagiraConfig.Properties.ValueIds.ForDogs;
             var goods = await GetGoodsAsync(queryProps);
             return goods;
         }
 
         public async Task<GoodsDTO> GetOtherGoodsAsync(BagiraQueryProps queryProps)
         {
-            var configPath = "1c:Properties:ValueIds:ForOthers";
-            var configValue = _configuration[configPath]
-                ?? throw new Exception($"Not found configuration: {configPath}");
-            var otherValueIds = configValue.Split(",");
-            queryProps.PropertyValuesIds = otherValueIds;
+            queryProps.PropertyValuesIds = _bagiraConfig.Properties.ValueIds.ForOthers;
             var goods = await GetGoodsAsync(queryProps);
             return goods;
         }
@@ -100,16 +114,6 @@ namespace BagiraWebApi.Services.Bagira
             var take = queryProps.Take ?? 20;
             var skip = queryProps.Skip ?? 0;
 
-            var storageConfigPath = "1c:DefaultStorage";
-            var storageConfigValue = _configuration[storageConfigPath]
-                ?? throw new Exception($"Not found configuration: {storageConfigPath}");
-            var storageId = int.Parse(storageConfigValue);
-
-            var priceTypeConfigPath = "1c:DefaultPriceType";
-            var priceTypeConfigValue = _configuration[priceTypeConfigPath]
-                ?? throw new Exception($"Not found configuration: {priceTypeConfigPath}");
-            var priceTypeId = int.Parse(priceTypeConfigValue);
-
             string? query = null;
             if (queryProps.Query != null)
             {
@@ -117,7 +121,6 @@ namespace BagiraWebApi.Services.Bagira
                 Regex rgx = new Regex(pattern);
                 var matches = rgx.Split(queryProps.Query.Trim());
                 query = "\"" + string.Join("*\" and \"", matches) + "*\"";
-                Console.WriteLine($"{queryProps.Query}:{query}");
             }
 
             var goodsQuery = _context.Goods
@@ -127,21 +130,21 @@ namespace BagiraWebApi.Services.Bagira
                     && !good.IsGroup
                     && good.ImgDataVersion != null
                     && _context.GoodRests
-                        .Any(goodRest => goodRest.GoodId == good.Id && goodRest.StorageId == storageId)
+                        .Any(goodRest => goodRest.GoodId == good.Id && goodRest.StorageId == _bagiraConfig.DefaultStorage)
                     && (queryProps.PropertyValuesIds == null || _context.GoodPropertyValues
                         .Any(
                             gpv => gpv.GoodId == good.Id
                             && queryProps!.PropertyValuesIds.Contains(gpv.ValueId)
                             ))
                     )
-                .Join(_context.GoodPrices.Where(gp => gp.PriceTypeId == priceTypeId),
+                .Join(_context.GoodPrices.Where(gp => gp.PriceTypeId == _bagiraConfig.DefaultPriceType),
                     good => good.Id,
                     gp => gp.GoodId,
                     (good, goodPrice) => new GoodDTO
                     {
                         Id = good.Id,
                         Name = good.FullName,
-                        ImgUrl = good.ImgDataVersion != null ? Path.Combine(IMG_400_DIRECTORY, $"{good.Id}.jpg"): null,
+                        ImgUrl = good.ImgDataVersion != null ? Path.Combine(IMG_400_DIRECTORY, $"{good.Id}.jpg") : null,
                         Price = goodPrice.Price
                     });
             var goodsCount = await goodsQuery.CountAsync();

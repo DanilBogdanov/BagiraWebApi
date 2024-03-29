@@ -1,13 +1,15 @@
-﻿using BagiraWebApi.Services.Exchanges.ExchangeServices;
+﻿using BagiraWebApi.Services.Bagira;
+using BagiraWebApi.Services.Exchanges.ExchangeServices;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 
 namespace BagiraWebApi.Services.Exchanges
 {
     public class Exchange1C
     {
-        private readonly ILogger<Exchange1C> _logger;
         private readonly ApplicationContext _context;
+        private readonly ILogger<Exchange1C> _logger;
         private readonly IOutputCacheStore _cache;
 
         private readonly ExchangeGoodService _exchangeGoodService;
@@ -17,16 +19,19 @@ namespace BagiraWebApi.Services.Exchanges
         private readonly ExchangePropertyValuesService _exchangePropertyValuesService;
         private readonly ExchangeImageService _exchangeImageService;
 
-        public Exchange1C(ILogger<Exchange1C> logger,
-            IConfiguration configuration,
+        public Exchange1C(
+            IOptions<Connection1CConfig> options,
             ApplicationContext context,
-            IOutputCacheStore cache)
+            ILogger<Exchange1C> logger,
+            IOutputCacheStore cache
+            )
         {
-            _logger = logger;
             _context = context;
+            _logger = logger;
             _cache = cache;
 
-            var soap1C = new Soap1C(configuration);
+            var connection1CConfig = options.Value;
+            var soap1C = new Soap1C(connection1CConfig);
 
             _exchangeGoodService = new ExchangeGoodService(context, soap1C, logger);
             _exchangeStorageService = new ExchangeStorageService(context, soap1C);
