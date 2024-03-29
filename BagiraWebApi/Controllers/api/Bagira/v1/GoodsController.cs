@@ -77,6 +77,25 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
             }
         }
 
+        //[OutputCache(PolicyName = "GoodsTag")]
+        [HttpGet("list")]
+        public async Task<IActionResult> GetGoodsListAsync(string ids)
+        {
+            List<int> idsList;
+            try
+            {
+                idsList = ids.Split(",").Select(id => int.Parse(id)).ToList();
+            }
+            catch
+            {
+                return BadRequest("Ids must be ints separated by coma");
+            }
+
+            var goods = await _goodService.GetGoodsByIds(idsList);
+
+            return Ok(goods);
+        }
+
         [OutputCache(PolicyName = "GoodsTag")]
         [HttpGet]
         public async Task<IActionResult> GetGoodsAsync(

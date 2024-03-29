@@ -1,5 +1,5 @@
-﻿using BagiraWebApi.Models.Bagira.DTO;
-using BagiraWebApi.Services.Auth;
+﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Models.Bagira.DTO;
 using BagiraWebApi.Services.Bagira.DataModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -26,6 +26,32 @@ namespace BagiraWebApi.Services.Bagira
             return goods;
         }
 
+        public async Task<List<GoodDTO>> GetGoodsByIds(List<int> ids)
+        {
+            GoodPrice defaultPrice = new() { Price = 0 };
+            GoodRest defaultRest = new () { Rest = 0 };
+
+            var goods = _context.Goods.Where(g =>
+                    !g.IsGroup
+                    && ids.Contains(g.Id))
+                .Select(good => new GoodDTO
+                {
+                    Id = good.Id,
+                    Name = good.FullName,
+                    Price = (_context.GoodPrices
+                        .FirstOrDefault(gp =>
+                            gp.PriceTypeId == _bagiraConfig.DefaultPriceType
+                            && gp.GoodId == good.Id) ?? defaultPrice).Price,
+                    Rest = (_context.GoodRests
+                        .FirstOrDefault(gr =>
+                            gr.StorageId == _bagiraConfig.DefaultStorage
+                            && gr.GoodId == good.Id) ?? defaultRest).Rest,
+                    ImgUrl = good.ImgDataVersion != null ? Path.Combine(IMG_400_DIRECTORY, $"{good.Id}.jpg") : null,
+                });
+
+            return await goods.ToListAsync();
+        }
+
         public async Task<List<GoodGroupDTO>> GetGoodGroupsAsync()
         {
             var groups = await _context.Goods.Where(g => g.IsGroup)
@@ -44,12 +70,12 @@ namespace BagiraWebApi.Services.Bagira
             }
 
             var price = await _context.GoodPrices
-                .FirstOrDefaultAsync(pr => 
-                    pr.PriceTypeId == _bagiraConfig.DefaultPriceType 
+                .FirstOrDefaultAsync(pr =>
+                    pr.PriceTypeId == _bagiraConfig.DefaultPriceType
                     && pr.GoodId == id);
 
-            string? imgUrl = good.ImgDataVersion != null 
-                ? Path.Combine(IMG_800_DIRECTORY, $"{id}.jpg") 
+            string? imgUrl = good.ImgDataVersion != null
+                ? Path.Combine(IMG_800_DIRECTORY, $"{id}.jpg")
                 : null;
 
             return new GoodDTO
@@ -95,7 +121,6 @@ namespace BagiraWebApi.Services.Bagira
                 Regex rgx = new Regex(pattern);
                 var matches = rgx.Split(queryProps.Query.Trim());
                 query = "\"" + string.Join("*\" and \"", matches) + "*\"";
-                Console.WriteLine($"{queryProps.Query}:{query}");
             }
 
             var goodsQuery = _context.Goods
@@ -119,7 +144,7 @@ namespace BagiraWebApi.Services.Bagira
                     {
                         Id = good.Id,
                         Name = good.FullName,
-                        ImgUrl = good.ImgDataVersion != null ? Path.Combine(IMG_400_DIRECTORY, $"{good.Id}.jpg"): null,
+                        ImgUrl = good.ImgDataVersion != null ? Path.Combine(IMG_400_DIRECTORY, $"{good.Id}.jpg") : null,
                         Price = goodPrice.Price
                     });
             var goodsCount = await goodsQuery.CountAsync();
