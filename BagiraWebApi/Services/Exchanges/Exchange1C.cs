@@ -21,6 +21,7 @@ namespace BagiraWebApi.Services.Exchanges
 
         public Exchange1C(
             IOptions<Connection1CConfig> options,
+            IOptions<KeywordsConfig> keywords,
             ApplicationContext context,
             ILogger<Exchange1C> logger,
             IOutputCacheStore cache
@@ -31,9 +32,10 @@ namespace BagiraWebApi.Services.Exchanges
             _cache = cache;
 
             var connection1CConfig = options.Value;
+
             var soap1C = new Soap1C(connection1CConfig);
 
-            _exchangeGoodService = new ExchangeGoodService(context, soap1C, logger);
+            _exchangeGoodService = new ExchangeGoodService(context, soap1C, logger, keywords.Value);
             _exchangeStorageService = new ExchangeStorageService(context, soap1C);
             _exchangeRestService = new ExchangeRestService(context, soap1C);
             _exchangePriceService = new ExchangePriceService(context, soap1C);
