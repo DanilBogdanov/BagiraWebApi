@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\bagira\" />
+    <Folder Include="Data\" />
   </ItemGroup>
 
   <ItemGroup>
