@@ -1,9 +1,13 @@
 ﻿using BagiraWebApi.Models.Bagira;
+using BagiraWebApi.Services.Bagira;
 using BagiraWebApi.Services.Exchanges.DataModels;
 using BagiraWebApi.Services.Exchanges.DataModels.DTO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using static BagiraWebApi.Services.Exchanges.Comparators;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BagiraWebApi.Services.Exchanges.ExchangeServices
 {
@@ -13,13 +17,19 @@ namespace BagiraWebApi.Services.Exchanges.ExchangeServices
         private readonly ApplicationContext _context;
         private readonly Soap1C _soap1C;
         private readonly ILogger<Exchange1C> _logger;
+        private readonly KeywordsConfig _keywordsConfig;
 
-        public ExchangeGoodService(ApplicationContext context, Soap1C soap1C, ILogger<Exchange1C> logger)
+        public ExchangeGoodService(
+            ApplicationContext context,
+            Soap1C soap1C, ILogger<Exchange1C> logger,
+            KeywordsConfig keywords)
         {
             _context = context;
             _soap1C = soap1C;
             _logger = logger;
+            _keywordsConfig = keywords;
         }
+
         public async Task UpdateKeywordsAsync(int? parentId, string parentKeywords)
         {
             var goods = await _context.Goods.Where(g => g.ParentId == parentId).ToListAsync();
@@ -33,9 +43,33 @@ namespace BagiraWebApi.Services.Exchanges.ExchangeServices
                 }
                 else
                 {
-                    var prop = _context.GoodPropertyValues
+                    var keywords = $"{parentKeywords} {good.Name} {good.FullName}";
+
+                    var animalProp = _context.GoodPropertyValues
                         .FirstOrDefault(gpv => gpv.PropertyId == "М00000007" && gpv.GoodId == good.Id);
-                    good.KeyWords = $"{parentKeywords} {good.Name} {good.FullName} {prop?.Value ?? ""}";
+
+                    if (animalProp != null)
+                    {
+                        var keyValue = _keywordsConfig.Animal.FirstOrDefault(pair => pair.Key == animalProp.ValueId);
+
+                        if (keyValue != null)
+                        {
+                            keywords = $"{keywords} {keyValue.Value}";
+                        }
+                    }
+                    string target = " ";
+
+                    string bracketsPattern = @"[()]";
+                    Regex bracketsRegex = new(bracketsPattern);
+                    keywords = bracketsRegex.Replace(keywords, target);
+                    
+                    string spacesPattern = @"\s+";
+                    Regex regex = new(spacesPattern);
+                    keywords = bracketsRegex.Replace(keywords, target);
+
+                    keywords = keywords.Trim();
+
+                    good.KeyWords = keywords;
                 }
             }
         }
@@ -151,7 +185,7 @@ namespace BagiraWebApi.Services.Exchanges.ExchangeServices
                             {
                                 updateGoodResult.IdsToDeleteImage.Add(good.Id);
                             }
-                            good.ImgDataVersion = loadedGood.ImgDataVersion;                            
+                            good.ImgDataVersion = loadedGood.ImgDataVersion;
                         }
                     }
                 }
@@ -171,8 +205,8 @@ namespace BagiraWebApi.Services.Exchanges.ExchangeServices
             {
                 var idsWithImage = _context.Goods.Where(g => ids.Contains(g.Id) && g.ImgDataVersion != null).Select(g => g.Id).ToList();
                 deleteGoodsResult.IdsToDeleteImage.AddRange(idsWithImage);
-                
-                await _context.Goods.Where(good => ids.Contains(good.Id)).ExecuteDeleteAsync(); 
+
+                await _context.Goods.Where(good => ids.Contains(good.Id)).ExecuteDeleteAsync();
             }
 
             return deleteGoodsResult;

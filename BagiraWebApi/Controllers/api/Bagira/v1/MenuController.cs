@@ -8,7 +8,7 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
     [ApiController]
     public class MenuController : ControllerBase
     {
-        private MenuService _bagiraService;
+        private readonly MenuService _bagiraService;
 
         public MenuController(MenuService bagiraService)
         {

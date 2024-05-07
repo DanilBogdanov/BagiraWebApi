@@ -12,7 +12,7 @@ namespace BagiraWebApi.Controllers.api.Bagira.v1
     {
         private readonly GoodService _goodService;
 
-        public GoodsController(GoodService bagiraService, Exchange1C exchange1C)
+        public GoodsController(GoodService bagiraService)
         {
             _goodService = bagiraService;
         }
