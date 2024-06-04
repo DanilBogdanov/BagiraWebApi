@@ -1,5 +1,6 @@
 using BagiraServer.Services.Parser;
 using BagiraWebApi;
+using BagiraWebApi.Configs.Messenger;
 using BagiraWebApi.Services;
 using BagiraWebApi.Services.Auth;
 using BagiraWebApi.Services.Bagira;
@@ -11,8 +12,10 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
-builder.Configuration.AddJsonFile("Data\\keywords.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("Configs/Messenger/messengerConfig.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("Data/keywords.json", optional: true, reloadOnChange: true);
 builder.Services.AddOptions<AuthConfig>().BindConfiguration("Auth").ValidateDataAnnotations().ValidateOnStart();
+builder.Services.AddOptions<MessengerConfig>().BindConfiguration("Messenger").ValidateDataAnnotations().ValidateOnStart();
 builder.Services.AddOptions<BagiraConfig>().BindConfiguration("Bagira").ValidateDataAnnotations().ValidateOnStart();
 builder.Services.AddOptions<Connection1CConfig>().BindConfiguration("Connection1C").ValidateDataAnnotations().ValidateOnStart();
 builder.Services.AddOptions<KeywordsConfig>().BindConfiguration("Keywords").ValidateDataAnnotations().ValidateOnStart();
