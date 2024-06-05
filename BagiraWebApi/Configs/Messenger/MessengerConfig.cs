@@ -5,6 +5,8 @@ namespace BagiraWebApi.Configs.Messenger
     public class MessengerConfig
     {
         [Required]
+        public required string FromTitle { get; init; }
+        [Required]
         public required EmailConfig[] Emails { get; init; }
     }
 

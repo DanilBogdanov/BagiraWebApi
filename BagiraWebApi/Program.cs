@@ -6,13 +6,14 @@ using BagiraWebApi.Services.Auth;
 using BagiraWebApi.Services.Bagira;
 using BagiraWebApi.Services.Exchanges;
 using BagiraWebApi.Services.Loggers.FileLogger;
+using BagiraWebApi.Services.Messengers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
-builder.Configuration.AddJsonFile("Configs/Messenger/messengerConfig.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("Configs/Messenger/messengerSettings.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("Data/keywords.json", optional: true, reloadOnChange: true);
 builder.Services.AddOptions<AuthConfig>().BindConfiguration("Auth").ValidateDataAnnotations().ValidateOnStart();
 builder.Services.AddOptions<MessengerConfig>().BindConfiguration("Messenger").ValidateDataAnnotations().ValidateOnStart();
@@ -34,6 +35,7 @@ builder.Services.AddScoped<GoodService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ParserService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<MessengerService>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddCors();
 builder.Services.AddOutputCache(oc =>

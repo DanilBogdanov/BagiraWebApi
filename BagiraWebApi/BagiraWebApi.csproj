@@ -30,7 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\Messengers\" />
     <Folder Include="wwwroot\bagira\" />
     <Folder Include="Data\" />
   </ItemGroup>
