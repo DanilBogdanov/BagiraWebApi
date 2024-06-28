@@ -2,6 +2,6 @@
 {
     public interface IMessenger
     {
-        Task SendMessageAsync(string title, string message);
+        Task SendMessageAsync(string contact, string title, string message);
     }
 }

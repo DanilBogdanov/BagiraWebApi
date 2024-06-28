@@ -35,6 +35,8 @@ builder.Services.AddScoped<GoodService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ParserService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddSingleton<WTelegramService>();
+builder.Services.AddHostedService(provider => provider.GetService<WTelegramService>()!);
 builder.Services.AddScoped<MessengerService>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddCors();
