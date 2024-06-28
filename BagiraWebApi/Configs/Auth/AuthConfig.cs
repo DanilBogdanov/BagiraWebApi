@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BagiraWebApi.Services.Auth
+namespace BagiraWebApi.Configs.Auth
 {
     public class AuthConfig
     {

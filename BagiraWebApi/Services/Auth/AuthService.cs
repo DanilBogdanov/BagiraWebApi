@@ -1,4 +1,5 @@
-﻿using BagiraWebApi.Models.Auth;
+﻿using BagiraWebApi.Configs.Auth;
+using BagiraWebApi.Models.Auth;
 using BagiraWebApi.Services.Auth.DTO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
