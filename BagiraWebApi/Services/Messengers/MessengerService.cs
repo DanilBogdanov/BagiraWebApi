@@ -8,28 +8,30 @@ namespace BagiraWebApi.Services.Messengers
     {
         private readonly MessengerConfig _messengerConfig;
         private readonly ILogger<MessengerService> _logger;
+        private readonly WTelegram.Client _telegramClient;
 
-        public MessengerService(IOptions<MessengerConfig> messengerConfig, ILogger<MessengerService> logger)
+        public MessengerService(IOptions<MessengerConfig> messengerConfig, WTelegramService wTelegramService, ILogger<MessengerService> logger)
         {
             _messengerConfig = messengerConfig.Value;
+            _telegramClient = wTelegramService.Client;
             _logger = logger;
         }
 
-        public async Task SendMessageAsync(User user, string title, string message)
+        public async Task SendMessageAsync(MessageType messageType, string contact, string title, string message)
         {
-            IMessenger messenger = GetMessenger(user);
+            IMessenger messenger = GetMessenger(messageType);
 
-            await messenger.SendMessageAsync(title, message);
+            await messenger.SendMessageAsync(contact, title, message);
         }
 
-        private IMessenger GetMessenger(User user)
+        private IMessenger GetMessenger(MessageType messageType)
         {
-            if (user.Email != null)
+            return messageType switch
             {
-                return new EmailMessenger(user.Email, _messengerConfig, _logger);
-            }
-
-            throw new Exception("User must have email or phone");
+                MessageType.Email => new EmailMessenger(_messengerConfig, _logger),
+                MessageType.Telegram => new TelegramMessenger(_telegramClient),
+                _ => throw new NotImplementedException(),
+            };
         }
     }
 }
