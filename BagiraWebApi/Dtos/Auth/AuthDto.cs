@@ -1,4 +1,4 @@
-﻿namespace BagiraWebApi.Services.Auth
+﻿namespace BagiraWebApi.Dtos.Auth
 {
     public class AuthDto
     {
