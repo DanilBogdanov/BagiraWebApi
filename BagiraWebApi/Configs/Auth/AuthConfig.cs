@@ -9,9 +9,7 @@ namespace BagiraWebApi.Configs.Auth
         [Required]
         public required string Audience { get; init; }
         [Required]
-        public required string AccessKey { get; init; }
-        [Required]
-        public required string RefreshKey { get; init; }
+        public required string Key { get; init; }        
         [Required]
         public required int TokenValidityInMinutes { get; init; }
         [Required]
