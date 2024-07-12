@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BagiraWebApi.Services.Auth
+namespace BagiraWebApi.Configs.Auth
 {
     public class AuthConfig
     {
@@ -9,12 +9,22 @@ namespace BagiraWebApi.Services.Auth
         [Required]
         public required string Audience { get; init; }
         [Required]
-        public required string AccessKey { get; init; }
-        [Required]
-        public required string RefreshKey { get; init; }
+        public required string Key { get; init; }        
         [Required]
         public required int TokenValidityInMinutes { get; init; }
         [Required]
+        public required int MaxSignInTryCount { get; init; }
+        [Required]
         public required int RefreshTokenValidityInDays { get; init; }
+        [Required]
+        public required Client[] Clients { get; init; }
+    }
+
+    public class Client
+    {
+        [Required]
+        public required string Id { get; init; }
+        [Required]
+        public required string Secret { get; init; }
     }
 }

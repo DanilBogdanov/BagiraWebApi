@@ -1,8 +1,10 @@
 using BagiraServer.Services.Parser;
 using BagiraWebApi;
+using BagiraWebApi.Configs.Auth;
 using BagiraWebApi.Configs.Messenger;
 using BagiraWebApi.Services;
 using BagiraWebApi.Services.Auth;
+using BagiraWebApi.Services.Auth.Services;
 using BagiraWebApi.Services.Bagira;
 using BagiraWebApi.Services.Exchanges;
 using BagiraWebApi.Services.Loggers.FileLogger;
@@ -13,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("Configs/Auth/authSettings.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("Configs/Messenger/messengerSettings.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("Data/keywords.json", optional: true, reloadOnChange: true);
 builder.Services.AddOptions<AuthConfig>().BindConfiguration("Auth").ValidateDataAnnotations().ValidateOnStart();
@@ -34,10 +37,10 @@ builder.Services.AddScoped<Exchange1C>();
 builder.Services.AddScoped<GoodService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ParserService>();
+builder.Services.AddScoped<MessengerService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddSingleton<WTelegramService>();
 builder.Services.AddHostedService(provider => provider.GetService<WTelegramService>()!);
-builder.Services.AddScoped<MessengerService>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddCors();
 builder.Services.AddOutputCache(oc =>
@@ -52,7 +55,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         var authConfig = builder.Configuration.GetSection("Auth").Get<AuthConfig>();
-        options.TokenValidationParameters = AuthService.GetTokenValidationParameters(authConfig);
+        options.TokenValidationParameters = TokenService.GetTokenValidationParameters(authConfig);
     });
 
 builder.Logging.AddFile(Path.Combine(Directory.GetCurrentDirectory(), "logs"));

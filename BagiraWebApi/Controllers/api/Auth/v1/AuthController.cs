@@ -1,6 +1,9 @@
-﻿using BagiraWebApi.Services.Auth;
-using BagiraWebApi.Services.Auth.DTO;
+﻿using BagiraWebApi.Dtos.Auth;
+using BagiraWebApi.Exceptions.Auth;
+using BagiraWebApi.Services.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BagiraWebApi.Controllers.api.Auth.v1
 {
@@ -8,61 +11,114 @@ namespace BagiraWebApi.Controllers.api.Auth.v1
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private AuthService _authService;
+        private readonly AuthService _authService;
 
         public AuthController(AuthService authService)
         {
             _authService = authService;
         }
 
-        [HttpPost("signin")]
-        public async Task<IActionResult> SignInAsync(SignInForm signInForm)
+        [HttpPost("signin/anonimous")]
+        public async Task<IActionResult> SignInAnonimousAsync(SignInBaseRequest signInRequest)
         {
-            var res = await _authService.SignIn(signInForm);
-            Response.Cookies.Append("refresh", res.RefreshToken, new CookieOptions
+            try
             {
-                Path = "/api/auth",
-                HttpOnly = true,
-                Secure = true,
-                IsEssential = true
-            });
-
-            return Ok(res);
-        }
-
-
-        [HttpPost("signup")]
-        public async Task<IActionResult> SignUpAsync(SignUpUserForm userForm)
-        {
-            var createdId = await _authService.SignUpAsync(userForm);
-            return Ok(createdId);
-        }
-
-        [HttpPost("logout")]
-        public IActionResult Logout()
-        {
-
-            return Ok("test");
-        }
-
-        [HttpPost("refresh")]
-        public async Task<IActionResult> RefreshAsync()
-        {
-            if (Request.Cookies.TryGetValue("refresh", out var refreshToken))
-            {
-                var tokens = await _authService.RefreshToken(refreshToken);
-                Response.Cookies.Append("refresh", tokens.RefreshToken, new CookieOptions
-                {
-                    Path = "/api/auth",
-                    HttpOnly = true,
-                    Secure = true,
-                    IsEssential = true
-                });
+                var tokens = await _authService.SignInAnonimous(signInRequest);
 
                 return Ok(tokens);
             }
+            catch (ClientValidationException)
+            {
+                return Forbid("Client is invalid");
+            }
+        }
 
-            return Unauthorized();
+        [Authorize]
+        [HttpPost("signin/email")]
+        public async Task<IActionResult> SignInEmailAsync(SignInRequest signInRequestDTO)
+        {
+            try
+            {
+                var tokens = await _authService.SignInEmail(signInRequestDTO);
+
+                return Ok(tokens);
+            }
+            catch (ClientValidationException)
+            {
+                return Forbid("Client is invalid");
+            }
+            catch (UserNotFoundException)
+            {
+                return NotFound("User not found");
+            }
+            catch (SignInException ex)
+            {
+                return BadRequest(new
+                {
+                    ex.NeedToRequestVerifyCode,
+                    ex.AttemptsLeft,
+                    ex.IsWrongCode
+                });
+            }
+        }
+
+        [Authorize]
+        [HttpPost("verify/email")]
+        public async Task<IActionResult> VerifyEmailAsync(string email)
+        {
+            await _authService.SendVerificationCodeByEmailAsync(email);
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("signout")]
+        public async Task<IActionResult> SignOutAsync()
+        {
+            var claimsPrincipal = HttpContext.User;
+
+            try
+            {
+                await _authService.SignOut(claimsPrincipal);
+                return Ok();
+            }
+            catch (SessionNotFoundException)
+            {
+                return Forbid("Session not found");
+            }
+            catch (SessionValidationException)
+            {
+                return Forbid("Invalid session token");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpPost("refresh")]
+        public async Task<IActionResult> RefreshAsync()
+        {
+            var claimsPrincipal = HttpContext.User;
+
+            try
+            {
+                var tokens = await _authService.RefreshAsync(claimsPrincipal);
+                return Ok(tokens);
+            }
+            catch (SessionNotFoundException)
+            {
+                return Forbid("Session not found");
+            }
+            catch (SessionValidationException)
+            {
+                return Forbid("Invalid session token");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

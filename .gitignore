@@ -364,3 +364,4 @@ FodyWeavers.xsd
 /BagiraWebApi/config.json
 /BagiraWebApi/wwwroot/bagira/img/
 /BagiraWebApi/Configs/Messenger/messengerSettings.json
+/BagiraWebApi/Configs/Auth/authSettings.json
