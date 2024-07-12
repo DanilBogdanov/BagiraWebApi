@@ -2,6 +2,7 @@ using BagiraServer.Services.Parser;
 using BagiraWebApi;
 using BagiraWebApi.Configs.Auth;
 using BagiraWebApi.Configs.Messenger;
+using BagiraWebApi.Services;
 using BagiraWebApi.Services.Auth;
 using BagiraWebApi.Services.Auth.Services;
 using BagiraWebApi.Services.Bagira;
