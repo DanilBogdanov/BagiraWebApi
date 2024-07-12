@@ -1,6 +1,6 @@
 ﻿namespace BagiraWebApi.Dtos.Auth
 {
-    public class AuthDto
+    public class TokensDto
     {
         public required string AccessToken { get; set; }
         public required string RefreshToken { get; set; }
