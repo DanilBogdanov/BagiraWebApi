@@ -13,6 +13,8 @@ namespace BagiraWebApi.Configs.Auth
         [Required]
         public required int TokenValidityInMinutes { get; init; }
         [Required]
+        public required int MaxSignInTryCount { get; init; }
+        [Required]
         public required int RefreshTokenValidityInDays { get; init; }
         [Required]
         public required Client[] Clients { get; init; }
