@@ -32,6 +32,8 @@ namespace BagiraWebApi.Configs.Messenger
         public required string ApiHash { get; init; }
         [Required]
         public required string PhoneNumber { get; init; }
+        [Required]
+        public required string SessionPathname { get; init; }
 
         public string? this[string propName]
         {
@@ -42,6 +44,7 @@ namespace BagiraWebApi.Configs.Messenger
                     "api_id" => ApiId,
                     "api_hash" => ApiHash,
                     "phone_number" => PhoneNumber,
+                    "session_pathname" => SessionPathname,
                     _ => null,
                 };
             }
