@@ -18,7 +18,7 @@ namespace BagiraWebApi.Controllers.api.Auth.v1
             _authService = authService;
         }
 
-        [HttpPost("signin/anonimous")]
+        [HttpPost("signin/anonymous")]
         public async Task<IActionResult> SignInAnonimousAsync(SignInBaseRequest signInRequest)
         {
             try
