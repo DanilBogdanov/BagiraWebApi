@@ -54,6 +54,7 @@ namespace BagiraWebApi.Services.Auth.Services
 
             return new TokensDto
             {
+                IsAnonymous = session.User == null,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = (int)accessLifeTime.TotalSeconds
